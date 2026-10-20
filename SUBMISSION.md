@@ -7,7 +7,8 @@
 - **Tagline:** GenAI-Powered Event Studio for Weddings, Milestone Birthdays, and Community Festivals
 - **Author / Developer:** Harshal Bagul
 - **Repository URL:** [https://github.com/harshalbagul725-source/auraplan-ai](https://github.com/harshalbagul725-source/auraplan-ai)
-- **Live Deployed Application:** [https://harshalbagul725-source.github.io/auraplan-ai/](https://harshalbagul725-source.github.io/auraplan-ai/)
+- **Local Live Demo URL:** [http://localhost:8080/](http://localhost:8080/)
+- **Online Deployed Application:** [https://harshalbagul725-source.github.io/auraplan-ai/](https://harshalbagul725-source.github.io/auraplan-ai/)
 
 ---
 
@@ -22,7 +23,8 @@ Organizing large-scale events—whether a 140-guest luxury wedding, a milestone 
 
 | Resource | Link |
 | :--- | :--- |
-| **🌐 Live Deployed App** | [https://harshalbagul725-source.github.io/auraplan-ai/](https://harshalbagul725-source.github.io/auraplan-ai/) |
+| **💻 Local Live Demo** | [http://localhost:8080/](http://localhost:8080/) |
+| **🌐 Online Deployed App** | [https://harshalbagul725-source.github.io/auraplan-ai/](https://harshalbagul725-source.github.io/auraplan-ai/) |
 | **📁 Source Code (GitHub)** | [https://github.com/harshalbagul725-source/auraplan-ai](https://github.com/harshalbagul725-source/auraplan-ai) |
 | **📑 Documentation & Guide** | [README.md](https://github.com/harshalbagul725-source/auraplan-ai#readme) |
 

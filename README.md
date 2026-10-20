@@ -9,11 +9,12 @@
 
 ---
 
-> ## 🚀 Live Demo Website URL
+> ## 🚀 Live Demo URLs
 > 
-> ### 🔗 **[https://harshalbagul725-source.github.io/auraplan-ai/](https://harshalbagul725-source.github.io/auraplan-ai/)**
+> - 💻 **Local Live Demo URL:** **[http://localhost:8080/](http://localhost:8080/)**
+> - 🌐 **Online Deployed Website:** **[https://harshalbagul725-source.github.io/auraplan-ai/](https://harshalbagul725-source.github.io/auraplan-ai/)**
 > 
-> *Click the link above to immediately open and interact with the live deployed web application in any browser.*
+> *Click [http://localhost:8080/](http://localhost:8080/) to interact with the running local server, or use the online deployed website.*
 
 ---
 
