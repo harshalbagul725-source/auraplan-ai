@@ -1,6 +1,6 @@
 # 🌟 AuraPlan AI — The Next-Gen Intelligent Event Planning Studio
 
-[![Live Demo Website](https://img.shields.io/badge/Live%20Demo%20Website-https%3A%2F%2Fharshalbagul725--source.github.io%2Fauraplan--ai%2F-success?style=for-the-badge&logo=githubpages&logoColor=white)](https://harshalbagul725-source.github.io/auraplan-ai/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-http%3A%2F%2Flocalhost%3A8080%2F-success?style=for-the-badge)](http://localhost:8080/)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/harshalbagul725-source/auraplan-ai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Vanilla JS](https://img.shields.io/badge/Built%20With-HTML5%20%2B%20Vanilla%20CSS%20%2B%20ES6-6366f1.svg)](#technology-stack)
@@ -9,13 +9,11 @@
 
 ---
 
-> ## 🚀 Live Interactive Application URLs
+> ## 🚀 Live Demo URL
 > 
-> - 🌐 **Official Public Web App (Permanent):** **[https://harshalbagul725-source.github.io/auraplan-ai/](https://harshalbagul725-source.github.io/auraplan-ai/)**
-> - ⚡ **Instant Live Preview Tunnel:** **[https://7ee5395e790706.lhr.life](https://7ee5395e790706.lhr.life)**
-> - 💻 **Local Development Server:** `http://localhost:8080/`
+> ### 🔗 **[http://localhost:8080/](http://localhost:8080/)**
 > 
-> *Reviewers and judges can immediately launch either live link above in any browser.*
+> *Click the link above to immediately open and interact with the application on your running local server.*
 
 ---
 

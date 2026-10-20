@@ -7,9 +7,7 @@
 - **Tagline:** GenAI-Powered Event Studio for Weddings, Milestone Birthdays, and Community Festivals
 - **Author / Developer:** Harshal Bagul
 - **Repository URL:** [https://github.com/harshalbagul725-source/auraplan-ai](https://github.com/harshalbagul725-source/auraplan-ai)
-- **Official Live Application:** [https://harshalbagul725-source.github.io/auraplan-ai/](https://harshalbagul725-source.github.io/auraplan-ai/)
-- **Instant Live Preview Tunnel:** [https://7ee5395e790706.lhr.life](https://7ee5395e790706.lhr.life)
-- **Local Development URL:** `http://localhost:8080/`
+- **Live Demo URL:** [http://localhost:8080/](http://localhost:8080/)
 
 ---
 
@@ -24,8 +22,7 @@ Organizing large-scale events—whether a 140-guest luxury wedding, a milestone 
 
 | Resource | Link |
 | :--- | :--- |
-| **🌐 Official Public Web App** | [https://harshalbagul725-source.github.io/auraplan-ai/](https://harshalbagul725-source.github.io/auraplan-ai/) |
-| **⚡ Instant Live Preview Tunnel** | [https://7ee5395e790706.lhr.life](https://7ee5395e790706.lhr.life) |
+| **💻 Live Demo** | [http://localhost:8080/](http://localhost:8080/) |
 | **📁 Source Code (GitHub)** | [https://github.com/harshalbagul725-source/auraplan-ai](https://github.com/harshalbagul725-source/auraplan-ai) |
 | **📑 Documentation & Guide** | [README.md](https://github.com/harshalbagul725-source/auraplan-ai#readme) |
 
@@ -76,7 +73,7 @@ Organizing large-scale events—whether a 140-guest luxury wedding, a milestone 
 ---
 
 ### 📝 Instructions for Judges / Testing
-1. Click the **Live Deployed Link**: [https://harshalbagul725-source.github.io/auraplan-ai/](https://harshalbagul725-source.github.io/auraplan-ai/).
+1. Click the **Live Demo Link**: [http://localhost:8080/](http://localhost:8080/).
 2. In the top header, test switching between the 3 event types using the dropdown.
 3. On the **AuraPlan AI Co-Pilot** tab, click any prompt chip along the top shelf (e.g., *"Suggest 3 cost-saving floral alternatives"*).
 4. In the AI response, test clicking **`+ Add to Budget`** to watch the item instantly inject into the budget!
