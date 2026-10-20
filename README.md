@@ -1,12 +1,19 @@
 # 🌟 AuraPlan AI — The Next-Gen Intelligent Event Planning Studio
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Online%20%E2%96%B6-success?style=for-the-badge&logo=githubpages&logoColor=white)](https://harshalbagul725-source.github.io/auraplan-ai/)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/harshalbagul725-source/auraplan-ai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Vanilla JS](https://img.shields.io/badge/Built%20With-HTML5%20%2B%20Vanilla%20CSS%20%2B%20ES6-6366f1.svg)](#technology-stack)
 [![AI Engine](https://img.shields.io/badge/GenAI-Google%20Gemini%20Flash%20%2B%20Native%20Engine-10b981.svg)](#ai-co-pilot-studio)
-[![Repository Size](https://img.shields.io/badge/Repo%20Size-%3C%202%20MB-success.svg)](#lightweight-architecture)
-[![Design](https://img.shields.io/badge/UI-Luxury%20Glassmorphism%20(Dark%2FLight)-f59e0b.svg)](#design--aesthetics)
+[![Repository Size](https://img.shields.io/badge/Repo%20Size-%3C%201%20MB-success.svg)](#lightweight-architecture)
 
-> **AuraPlan AI** is an executive-grade, responsive event planning studio engineered for organizing **Weddings**, **Milestone Birthdays**, and **Community Festivals**. It unifies dynamic budget management, macro and minute-by-minute day-of timelines, vendor pipeline tracking, curated aesthetic moodboards, and an interactive GenAI planning co-pilot.
+---
+
+### 🌐 **Live Deployed Application:** **[https://harshalbagul725-source.github.io/auraplan-ai/](https://harshalbagul725-source.github.io/auraplan-ai/)**
+### 📁 **GitHub Source Code:** **[https://github.com/harshalbagul725-source/auraplan-ai](https://github.com/harshalbagul725-source/auraplan-ai)**
+### 📄 **Official Submission Brief:** **[SUBMISSION.md](SUBMISSION.md)**
+
+---
 
 ---
 
