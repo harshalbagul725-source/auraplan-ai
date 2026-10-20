@@ -25,6 +25,7 @@ Organizing large-scale events—whether a 140-guest luxury wedding, a milestone 
 | **💻 Live Demo** | [http://localhost:8080/](http://localhost:8080/) |
 | **📁 Source Code (GitHub)** | [https://github.com/harshalbagul725-source/auraplan-ai](https://github.com/harshalbagul725-source/auraplan-ai) |
 | **📑 Documentation & Guide** | [README.md](https://github.com/harshalbagul725-source/auraplan-ai#readme) |
+| **🎬 Project Demo Video** | *(Upload to YouTube/Drive — see instructions below)* |
 
 ---
 
