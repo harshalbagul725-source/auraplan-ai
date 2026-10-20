@@ -7,7 +7,7 @@
 - **Tagline:** GenAI-Powered Event Studio for Weddings, Milestone Birthdays, and Community Festivals
 - **Author / Developer:** Harshal Bagul
 - **Repository URL:** [https://github.com/harshalbagul725-source/auraplan-ai](https://github.com/harshalbagul725-source/auraplan-ai)
-- **Live Demo URL:** [http://localhost:8080/](http://localhost:8080/)
+- **Live Demo URL:** [http://localhost:3000/](http://localhost:3000/)
 
 ---
 
@@ -22,7 +22,7 @@ Organizing large-scale events—whether a 140-guest luxury wedding, a milestone 
 
 | Resource | Link |
 | :--- | :--- |
-| **💻 Live Demo** | [http://localhost:8080/](http://localhost:8080/) |
+| **💻 Live Demo** | [http://localhost:3000/](http://localhost:3000/) |
 | **📁 Source Code (GitHub)** | [https://github.com/harshalbagul725-source/auraplan-ai](https://github.com/harshalbagul725-source/auraplan-ai) |
 | **📑 Documentation & Guide** | [README.md](https://github.com/harshalbagul725-source/auraplan-ai#readme) |
 | **🎬 Project Demo Video** | *(Upload to YouTube/Drive — see instructions below)* |
@@ -74,7 +74,7 @@ Organizing large-scale events—whether a 140-guest luxury wedding, a milestone 
 ---
 
 ### 📝 Instructions for Judges / Testing
-1. Click the **Live Demo Link**: [http://localhost:8080/](http://localhost:8080/).
+1. Click the **Live Demo Link**: [http://localhost:3000/](http://localhost:3000/).
 2. In the top header, test switching between the 3 event types using the dropdown.
 3. On the **AuraPlan AI Co-Pilot** tab, click any prompt chip along the top shelf (e.g., *"Suggest 3 cost-saving floral alternatives"*).
 4. In the AI response, test clicking **`+ Add to Budget`** to watch the item instantly inject into the budget!
