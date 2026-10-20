@@ -1,6 +1,6 @@
 # 🌟 AuraPlan AI — The Next-Gen Intelligent Event Planning Studio
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Online%20%E2%96%B6-success?style=for-the-badge&logo=githubpages&logoColor=white)](https://harshalbagul725-source.github.io/auraplan-ai/)
+[![Live Demo Website](https://img.shields.io/badge/Live%20Demo%20Website-https%3A%2F%2Fharshalbagul725--source.github.io%2Fauraplan--ai%2F-success?style=for-the-badge&logo=githubpages&logoColor=white)](https://harshalbagul725-source.github.io/auraplan-ai/)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/harshalbagul725-source/auraplan-ai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Vanilla JS](https://img.shields.io/badge/Built%20With-HTML5%20%2B%20Vanilla%20CSS%20%2B%20ES6-6366f1.svg)](#technology-stack)
@@ -9,11 +9,16 @@
 
 ---
 
-### 🌐 **Live Deployed Application:** **[https://harshalbagul725-source.github.io/auraplan-ai/](https://harshalbagul725-source.github.io/auraplan-ai/)**
-### 📁 **GitHub Source Code:** **[https://github.com/harshalbagul725-source/auraplan-ai](https://github.com/harshalbagul725-source/auraplan-ai)**
-### 📄 **Official Submission Brief:** **[SUBMISSION.md](SUBMISSION.md)**
+> ## 🚀 Live Demo Website URL
+> 
+> ### 🔗 **[https://harshalbagul725-source.github.io/auraplan-ai/](https://harshalbagul725-source.github.io/auraplan-ai/)**
+> 
+> *Click the link above to immediately open and interact with the live deployed web application in any browser.*
 
 ---
+
+### 📁 **GitHub Source Code:** **[https://github.com/harshalbagul725-source/auraplan-ai](https://github.com/harshalbagul725-source/auraplan-ai)**
+### 📄 **Official Submission Brief:** **[SUBMISSION.md](SUBMISSION.md)**
 
 ---
 
