@@ -1,6 +1,6 @@
 # 🌟 AuraPlan AI — The Next-Gen Intelligent Event Planning Studio
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-http%3A%2F%2Flocalhost%3A3000%2F-success?style=for-the-badge)]https://auraplan-ai.vercel.app/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-http%3A%2F%2Flocalhost%3A3000%2F-success?style=for-the-badge)]
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/harshalbagul725-source/auraplan-ai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Vanilla JS](https://img.shields.io/badge/Built%20With-HTML5%20%2B%20Vanilla%20CSS%20%2B%20ES6-6366f1.svg)](#technology-stack)
