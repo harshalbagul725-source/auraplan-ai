@@ -1,6 +1,6 @@
 # 🌟 AuraPlan AI — The Next-Gen Intelligent Event Planning Studio
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-http%3A%2F%2Flocalhost%3A8080%2F-success?style=for-the-badge)](http://localhost:8080/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-http%3A%2F%2Flocalhost%3A3000%2F-success?style=for-the-badge)](http://localhost:3000/)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/harshalbagul725-source/auraplan-ai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Vanilla JS](https://img.shields.io/badge/Built%20With-HTML5%20%2B%20Vanilla%20CSS%20%2B%20ES6-6366f1.svg)](#technology-stack)
@@ -11,7 +11,7 @@
 
 > ## 🚀 Live Demo URL
 > 
-> ### 🔗 **[http://localhost:8080/](http://localhost:8080/)**
+> ### 🔗 **[http://localhost:3000/](http://localhost:3000/)**
 > 
 > *Click the link above to immediately open and interact with the application on your running local server.*
 
@@ -83,9 +83,9 @@ AuraPlan AI is built with zero heavyweight build dependencies. You can run it in
 cd auraplan-ai
 
 # Start a lightweight local server
-python -m http.server 8080
+powershell -ExecutionPolicy Bypass -File serve.ps1
 ```
-Open **`http://localhost:8080`** in your browser.
+Open **`http://localhost:3000`** in your browser.
 
 ### Option B: Using VS Code Live Server
 1. Open the project folder in VS Code.
