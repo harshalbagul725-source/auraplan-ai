@@ -11,3 +11,9 @@ desktop.ini
 # Editor directories
 .vscode/
 .idea/
+
+# Media & Demo recordings (Excluded from GitHub)
+*.webp
+*.mp4
+*demo*
+
