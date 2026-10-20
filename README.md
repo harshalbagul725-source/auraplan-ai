@@ -9,12 +9,13 @@
 
 ---
 
-> ## 🚀 Live Demo URLs
+> ## 🚀 Live Interactive Application URLs
 > 
-> - 💻 **Local Live Demo URL:** **[http://localhost:8080/](http://localhost:8080/)**
-> - 🌐 **Online Deployed Website:** **[https://harshalbagul725-source.github.io/auraplan-ai/](https://harshalbagul725-source.github.io/auraplan-ai/)**
+> - 🌐 **Official Public Web App (Permanent):** **[https://harshalbagul725-source.github.io/auraplan-ai/](https://harshalbagul725-source.github.io/auraplan-ai/)**
+> - ⚡ **Instant Live Preview Tunnel:** **[https://7ee5395e790706.lhr.life](https://7ee5395e790706.lhr.life)**
+> - 💻 **Local Development Server:** `http://localhost:8080/`
 > 
-> *Click [http://localhost:8080/](http://localhost:8080/) to interact with the running local server, or use the online deployed website.*
+> *Reviewers and judges can immediately launch either live link above in any browser.*
 
 ---
 
