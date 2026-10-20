@@ -1,9 +1,9 @@
-# 🚀 Project Submission Brief: AuraPlan AI
+# 🚀 Project Submission Brief: AuraPlan AI — The Next-Gen Intelligent Event Planning Studio
 
 ---
 
 ### 📌 Project Overview
-- **Project Name:** AuraPlan AI — Next-Gen Intelligent Event Planning Studio
+- **Project Name:** AuraPlan AI — The Next-Gen Intelligent Event Planning Studio
 - **Tagline:** GenAI-Powered Event Studio for Weddings, Milestone Birthdays, and Community Festivals
 - **Author / Developer:** Harshal Bagul
 - **Repository URL:** [https://github.com/harshalbagul725-source/auraplan-ai](https://github.com/harshalbagul725-source/auraplan-ai)
