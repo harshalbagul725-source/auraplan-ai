@@ -56,7 +56,7 @@ class TimelineManager {
             ` : ''}
 
             <button class="btn btn-outline btn-sm" id="btn-ai-timeline-help">
-              <span class="ai-sparkle">✨</span> AI Optimize Timeline
+              <span class="ai-sparkle">✨</span> Timeline Suggestions
             </button>
 
             <button class="btn btn-primary btn-sm" id="btn-add-timeline-item">
@@ -97,7 +97,7 @@ class TimelineManager {
 
   renderMilestonesStream(milestones) {
     if (!milestones.length) {
-      return `<div class="empty-state glass-card"><p>No milestones created yet. Click "+ Add Milestone" or use AI to generate a full roadmap!</p></div>`;
+      return `<div class="empty-state glass-card"><p>No milestones created yet. Click "+ Add Milestone" or use the local planning helper for ideas.</p></div>`;
     }
 
     // Group milestones by phase
@@ -134,7 +134,7 @@ class TimelineManager {
     return `
       <div class="milestone-card glass-card ${isDone ? 'completed-card' : ''}" data-milestone-id="${m.id}">
         <div class="milestone-checkbox-wrap">
-          <input type="checkbox" class="custom-checkbox" data-action="toggle-milestone" data-id="${m.id}" ${isDone ? 'checked' : ''} />
+          <input type="checkbox" class="custom-checkbox" data-action="toggle-milestone" data-id="${m.id}" aria-label="Mark ${AuraPlanCore.escapeHTML(m.title)} complete" ${isDone ? 'checked' : ''} />
         </div>
         <div class="milestone-content">
           <div class="milestone-headline">

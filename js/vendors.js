@@ -73,11 +73,11 @@ class VendorManager {
         <!-- Vendor Controls & AI Help Bar -->
         <div class="vendor-controls-bar glass-card">
           <div class="vendor-filters-wrap">
-            <select id="vendor-filter-cat" class="select-dropdown">
+            <select id="vendor-filter-cat" class="select-dropdown" aria-label="Filter vendors by category">
               <option value="all">All Vendor Categories</option>
               ${categories.map(c => `<option value="${c}" ${this.catFilter === c ? 'selected' : ''}>${c}</option>`).join('')}
             </select>
-            <select id="vendor-filter-status" class="select-dropdown">
+            <select id="vendor-filter-status" class="select-dropdown" aria-label="Filter vendors by pipeline stage">
               <option value="all" ${this.statusFilter === 'all' ? 'selected' : ''}>All Pipeline Stages</option>
               <option value="Researching" ${this.statusFilter === 'Researching' ? 'selected' : ''}>Researching</option>
               <option value="Contacted" ${this.statusFilter === 'Contacted' ? 'selected' : ''}>Contacted</option>
@@ -90,7 +90,7 @@ class VendorManager {
 
           <div class="vendor-cta-wrap">
             <button class="btn btn-outline btn-sm" id="btn-vendor-ai-vibe">
-              <span class="ai-sparkle">✨</span> AI Vetting Questions
+              <span class="ai-sparkle">✨</span> Vendor Question Suggestions
             </button>
             <button class="btn btn-primary" id="btn-add-vendor">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>

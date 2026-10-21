@@ -1,101 +1,18 @@
 /**
  * AuraPlan AI - GenAI Planning Engine
- * Handles AI chat, generative brainstormers, and optional live Gemini API connection
+ * Provides the local demo planning engine. Live model requests require a server proxy.
  */
 
 class AIEngine {
   constructor() {
-    this.apiKey = localStorage.getItem("auraplan_gemini_key") || "";
-    this.model = "gemini-1.5-flash";
-  }
-
-  setApiKey(key) {
-    this.apiKey = key.trim();
-    if (this.apiKey) {
-      localStorage.setItem("auraplan_gemini_key", this.apiKey);
-    } else {
-      localStorage.removeItem("auraplan_gemini_key");
-    }
-  }
-
-  getApiKey() {
-    return this.apiKey;
-  }
-
-  hasLiveKey() {
-    return Boolean(this.apiKey && this.apiKey.length > 10);
+    localStorage.removeItem("auraplan_gemini_key");
   }
 
   /**
-   * Main conversational query handler
+   * Keep generated responses in the explicitly labeled local demo mode.
    */
   async ask(prompt, currentEvent, onChunk = null) {
-    // If live API key is present, try real Gemini API
-    if (this.hasLiveKey()) {
-      try {
-        return await this.callGeminiAPI(prompt, currentEvent, onChunk);
-      } catch (err) {
-        console.warn("Live Gemini API call failed, falling back to local AI engine:", err);
-        // continue to simulated engine
-      }
-    }
-
-    // High fidelity context-aware simulated intelligence engine
     return await this.simulateAIGeneration(prompt, currentEvent, onChunk);
-  }
-
-  /**
-   * Call real Google Gemini API
-   */
-  async callGeminiAPI(prompt, currentEvent, onChunk) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
-    
-    const systemContext = `You are AuraPlan AI, an elite event planner and executive producer specializing in Weddings, Milestone Birthdays, and Community Events.
-Current Event Context:
-- Title: ${currentEvent.title}
-- Event Type: ${currentEvent.type}
-- Target Date: ${currentEvent.date}
-- Guest Count: ${currentEvent.guestCount}
-- Target Budget: ${currentEvent.currency} ${currentEvent.targetBudget}
-- Theme: ${currentEvent.theme}
-
-Format your response in sleek GitHub Markdown with emoji bullet points, practical actionable steps, and clear headings.
-When suggesting budget items, format as: [BUDGET_ITEM: Category | Item Name | Estimated Cost]
-When suggesting timeline items, format as: [TIMELINE_ITEM: Time/Phase | Title | Description]
-When suggesting vendor questions, list them clearly with negotiation leverage.`;
-
-    const body = {
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: `${systemContext}\n\nUser Question: ${prompt}` }]
-        }
-      ],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 1200
-      }
-    };
-
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.error?.message || `API error ${res.status}`);
-    }
-
-    const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response received.";
-    
-    // Stream response smoothly to UI if callback provided
-    if (onChunk) {
-      await this.streamText(text, onChunk);
-    }
-    return text;
   }
 
   /**
@@ -138,7 +55,7 @@ When suggesting vendor questions, list them clearly with negotiation leverage.`;
 
   generateThemeResponse(currentEvent) {
     if (currentEvent.type === "wedding") {
-      return `### 🌸 AI Curated Wedding Concept: "Ethereal Glasshouse Sanctuary"
+      return `### 🌸 Local Wedding Concept: "Ethereal Glasshouse Sanctuary"
 
 **Core Narrative:** Blending natural organic flora with crisp modern glass architecture and candlelight intimacy.
 
@@ -157,7 +74,7 @@ When suggesting vendor questions, list them clearly with negotiation leverage.`;
 [BUDGET_ITEM: Decor & Florals | Suspended Edison Bulb & Foliage Trellis | 1850]
 [TIMELINE_ITEM: 02:00 PM | Ambient Candle & Floral Lighting Check | Ensure zero draft blows out pillar candle glass flutes]`;
     } else if (currentEvent.type === "birthday") {
-      return `### ⚡ AI Curated Birthday Concept: "Neo-Luxe Cyberpunk Penthouse"
+      return `### ⚡ Local Birthday Concept: "Neo-Luxe Cyberpunk Penthouse"
 
 **Core Narrative:** High-contrast luxury mixing dark obsidian textures with electric ultraviolet and golden amber neon glow.
 
@@ -176,7 +93,7 @@ When suggesting vendor questions, list them clearly with negotiation leverage.`;
 [BUDGET_ITEM: Decor & Lighting | 3D Laser Projection & LED Tube Arrays | 850]
 [TIMELINE_ITEM: 08:00 PM | Rooftop Sunset Lighting Shift | Trigger ultraviolet and neon bar illumination]`;
     } else {
-      return `### 🌾 AI Curated Community Concept: "Harvest Harmony & Heritage Grove"
+      return `### 🌾 Local Community Concept: "Harvest Harmony & Heritage Grove"
 
 **Core Narrative:** Welcoming, inclusive, multigenerational festival celebrating local makers, sustainable food, and neighborhood talents.
 
@@ -282,7 +199,7 @@ A huge thank you to our 40+ volunteers, city staff, and local sponsors who built
   }
 
   generateTimelineResponse(currentEvent) {
-    return `### ⏱️ AI Optimized Day-of Run-of-Show & Buffer Protocol
+    return `### ⏱️ Sample Day-of Run-of-Show & Buffer Protocol
 
 **Event:** ${currentEvent.title} | **Date:** ${currentEvent.date}
 

@@ -16,6 +16,9 @@ class AuraApp {
     this.timelineManager = new TimelineManager(this);
     this.vendorManager = new VendorManager(this);
     this.ideasManager = new IdeasManager(this);
+    this.plannerManager = new PlannerManager(this);
+    this.guestManager = new GuestManager(this);
+    this.invitationManager = new InvitationManager(this);
 
     this.init();
   }
@@ -173,11 +176,16 @@ class AuraApp {
     this.activeTab = tabId;
 
     document.querySelectorAll(".nav-tab-item").forEach(item => {
-      item.classList.toggle("active", item.dataset.tab === tabId);
+      const isSelected = item.dataset.tab === tabId;
+      item.classList.toggle("active", isSelected);
+      item.setAttribute("aria-selected", String(isSelected));
+      item.tabIndex = isSelected ? 0 : -1;
     });
 
     document.querySelectorAll(".tab-pane").forEach(pane => {
-      pane.classList.toggle("active", pane.id === `tab-${tabId}`);
+      const isActive = pane.id === `tab-${tabId}`;
+      pane.classList.toggle("active", isActive);
+      pane.setAttribute("aria-hidden", String(!isActive));
     });
 
     this.refreshCurrentTab();
@@ -202,6 +210,15 @@ class AuraApp {
         break;
       case "itinerary":
         this.renderMasterItinerary();
+        break;
+      case "planner":
+        this.plannerManager.render();
+        break;
+      case "guests":
+        this.guestManager.render();
+        break;
+      case "invitation":
+        this.invitationManager.render();
         break;
     }
   }
@@ -257,15 +274,15 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
             <textarea id="ai-chat-input" placeholder="Ask AuraPlan AI... (e.g. 'Draft a run-of-show for 140 guests', 'How do I cut $3,000 from catering?', 'Write a funny toast')" rows="2"></textarea>
             <button class="btn btn-primary" id="btn-send-ai-chat">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-              <span>Ask AI</span>
+              <span>Ask AuraPlan</span>
             </button>
           </div>
           <div class="ai-input-footer">
             <span class="ai-status-indicator">
-              <span class="status-dot ${window.auraAI.hasLiveKey() ? 'live' : 'sim'}"></span>
-              ${window.auraAI.hasLiveKey() ? 'Connected to live Google Gemini 1.5 Flash' : 'AuraPlan Native Event Intelligence Engine (Active)'}
+              <span class="status-dot sim"></span>
+              AuraPlan local demo engine (no live model connected)
             </span>
-            <button class="btn-text-link" id="btn-open-api-settings">Configure Gemini API Key ⚙️</button>
+            <span class="text-secondary text-xs">A server-side AI connection is not configured.</span>
           </div>
         </div>
       </div>
@@ -352,11 +369,6 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
         const p = chip.dataset.prompt;
         if (p) this.sendAIPrompt(p);
       };
-    });
-
-    // Configure Gemini API key
-    document.getElementById("btn-open-api-settings")?.addEventListener("click", () => {
-      this.openSettingsModal();
     });
 
     // Delegated Action Buttons in messages
@@ -569,6 +581,20 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
       item.addEventListener("click", () => {
         this.switchTab(item.dataset.tab);
       });
+      item.addEventListener("keydown", event => {
+        const tabs = Array.from(document.querySelectorAll(".nav-tab-item"));
+        const index = tabs.indexOf(item);
+        let nextIndex;
+        if (event.key === "ArrowRight") nextIndex = (index + 1) % tabs.length;
+        else if (event.key === "ArrowLeft") nextIndex = (index - 1 + tabs.length) % tabs.length;
+        else if (event.key === "Home") nextIndex = 0;
+        else if (event.key === "End") nextIndex = tabs.length - 1;
+        else return;
+
+        event.preventDefault();
+        tabs[nextIndex].focus();
+        this.switchTab(tabs[nextIndex].dataset.tab);
+      });
     });
 
     // Theme toggle
@@ -594,7 +620,7 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
         <form id="create-event-form" class="modal-form">
           <div class="form-row">
             <div class="form-group">
-              <label>Event Type *</label>
+              <label for="new-evt-type">Event Type *</label>
               <select name="type" id="new-evt-type" class="form-input">
                 <option value="wedding">💍 Wedding & Reception</option>
                 <option value="birthday">🎂 Milestone Birthday</option>
@@ -602,44 +628,44 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
               </select>
             </div>
             <div class="form-group">
-              <label>Event Name / Title *</label>
-              <input type="text" name="title" required placeholder="e.g. Maya's Golden 50th Jubilee" class="form-input" />
+              <label for="new-evt-title">Event Name / Title *</label>
+              <input id="new-evt-title" type="text" name="title" required placeholder="e.g. Maya's Golden 50th Jubilee" class="form-input" />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Event Date *</label>
-              <input type="date" name="date" required value="2026-11-20" class="form-input" />
+              <label for="new-evt-date">Event Date *</label>
+              <input id="new-evt-date" type="date" name="date" required value="2026-11-20" class="form-input" />
             </div>
             <div class="form-group">
-              <label>Start Time</label>
-              <input type="time" name="time" value="18:00" class="form-input" />
+              <label for="new-evt-time">Start Time</label>
+              <input id="new-evt-time" type="time" name="time" value="18:00" class="form-input" />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Target Budget ($ USD) *</label>
-              <input type="number" name="budget" step="500" required value="15000" class="form-input" />
+              <label for="new-evt-budget">Target Budget ($ USD) *</label>
+              <input id="new-evt-budget" type="number" name="budget" min="1" step="any" required value="15000" class="form-input" />
             </div>
             <div class="form-group">
-              <label>Expected Guest Count</label>
-              <input type="number" name="guests" value="80" class="form-input" />
+              <label for="new-evt-guests">Expected Guest Count *</label>
+              <input id="new-evt-guests" type="number" name="guests" min="1" max="100000" required value="80" class="form-input" />
             </div>
           </div>
           <div class="form-group">
-            <label>Location / City</label>
-            <input type="text" name="location" placeholder="e.g. Glasshouse Pavilion, Chicago, IL" class="form-input" />
+            <label for="new-evt-location">Location / City</label>
+            <input id="new-evt-location" type="text" name="location" placeholder="e.g. Glasshouse Pavilion, Chicago, IL" class="form-input" />
           </div>
           <div class="form-group">
-            <label>Vibe / Aesthetic Theme</label>
-            <input type="text" name="theme" placeholder="e.g. Modern Romantic Candlelit Greenhouse" class="form-input" />
+            <label for="new-evt-theme">Vibe / Aesthetic Theme</label>
+            <input id="new-evt-theme" type="text" name="theme" placeholder="e.g. Modern Romantic Candlelit Greenhouse" class="form-input" />
           </div>
         </form>
       `,
       confirmText: "Create Event Plan",
       onConfirm: () => {
         const form = document.getElementById("create-event-form");
-        if (!form) return;
+        if (!form || !form.reportValidity()) return false;
         const formData = new FormData(form);
         const type = formData.get("type");
         const title = formData.get("title");
@@ -650,8 +676,8 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
         const location = formData.get("location") || "TBD";
         const theme = formData.get("theme") || "Elegant & Modern";
 
-        if (!title) {
-          this.showToast("Please provide event title", "warning");
+        if (!title || !date || !Number.isFinite(budget) || budget <= 0 || !Number.isInteger(guests) || guests <= 0) {
+          this.showToast("Enter a title, date, positive budget, and valid guest count.", "warning");
           return false;
         }
 
@@ -670,6 +696,8 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
           targetBudget: budget,
           currency: "USD",
           theme,
+          planningPreferences: "",
+          guests: [],
           heroImage: heroImg,
           colorPalette: [
             { name: "Royal Indigo", hex: "#4338CA", role: "Primary Accent" },
@@ -722,19 +750,11 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
   }
 
   openSettingsModal() {
-    const currentKey = window.auraAI.getApiKey();
-
     this.showModal({
       title: "Settings & AI Configuration",
       content: `
         <div class="settings-modal-body">
-          <div class="form-group">
-            <label><strong>Google Gemini API Key (Optional)</strong></label>
-            <p class="text-secondary text-xs">
-              If provided, AuraPlan AI will query live Google Gemini 1.5 Flash. If left blank, it runs our rich, built-in intelligent event production simulation engine.
-            </p>
-            <input type="password" id="gemini-key-input" value="${currentKey}" placeholder="AIzaSy..." class="form-input" />
-          </div>
+          <p class="text-secondary text-sm">The built-in planner runs locally. Live Gemini requests are disabled until a secure server-side endpoint is configured; do not enter API keys in this static app.</p>
 
           <hr class="modal-divider" />
 
@@ -764,12 +784,7 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
       `,
       confirmText: "Save Settings",
       onConfirm: () => {
-        const keyInput = document.getElementById("gemini-key-input");
         const currSelect = document.getElementById("currency-select");
-
-        if (keyInput) {
-          window.auraAI.setApiKey(keyInput.value);
-        }
 
         if (currSelect) {
           this.currentEvent.currency = currSelect.value;
@@ -816,27 +831,55 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
     if (!overlay || !container) return;
 
     container.innerHTML = `
-      <div class="modal-card glass-card">
+      <div class="modal-card glass-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal-header">
-          <h3 class="modal-title">${title}</h3>
-          <button class="modal-close" id="modal-btn-close">&times;</button>
+          <h3 class="modal-title" id="modal-title">${title}</h3>
+          <button class="modal-close" id="modal-btn-close" type="button" aria-label="Close dialog">&times;</button>
         </div>
         <div class="modal-body">${content}</div>
         <div class="modal-footer">
-          <button class="btn btn-outline" id="modal-btn-cancel">${cancelText}</button>
-          <button class="btn btn-primary" id="modal-btn-confirm">${confirmText}</button>
+          <button class="btn btn-outline" id="modal-btn-cancel" type="button">${cancelText}</button>
+          <button class="btn btn-primary" id="modal-btn-confirm" type="button">${confirmText}</button>
         </div>
       </div>
     `;
 
     overlay.classList.add("open");
 
+    const previousFocus = document.activeElement;
+    const modal = container.querySelector(".modal-card");
+    const focusableSelector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
     const closeModal = () => {
       overlay.classList.remove("open");
+      document.removeEventListener("keydown", handleModalKeydown);
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+    };
+    const handleModalKeydown = (event) => {
+      if (event.key === "Escape") {
+        closeModal();
+        return;
+      }
+      if (event.key !== "Tab" || !modal) return;
+
+      const focusable = [...modal.querySelectorAll(focusableSelector)];
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) {
+        event.preventDefault();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
 
     document.getElementById("modal-btn-close")?.addEventListener("click", closeModal);
     document.getElementById("modal-btn-cancel")?.addEventListener("click", closeModal);
+    document.addEventListener("keydown", handleModalKeydown);
+    (modal?.querySelector("input:not([disabled]), select:not([disabled]), textarea:not([disabled])")
+      || modal?.querySelector(focusableSelector))?.focus();
     overlay.onclick = (e) => {
       if (e.target === overlay) closeModal();
     };

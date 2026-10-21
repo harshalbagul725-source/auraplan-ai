@@ -3,6 +3,7 @@ name: Deploy AuraPlan AI to GitHub Pages
 on:
   push:
     branches: ["main"]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -15,7 +16,35 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set Up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Test Dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Check JavaScript Syntax
+        run: npm run check
+
+      - name: Run Unit Tests and Critical Logic Coverage
+        run: npm run test:coverage
+
+      - name: Run Browser and Accessibility Tests
+        run: npm run test:e2e
+
   deploy:
+    needs: quality
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

@@ -42,7 +42,7 @@ class IdeasManager {
               <p class="card-subtitle">Harmonious tones for florals, stationery, lighting, and attire</p>
             </div>
             <button class="btn btn-outline btn-sm" id="btn-ai-new-palette">
-              <span class="ai-sparkle">✨</span> AI Palette Variant
+              <span class="ai-sparkle">✨</span> Local Palette Suggestions
             </button>
           </div>
           <div class="palette-grid">
@@ -68,7 +68,7 @@ class IdeasManager {
               <span class="ai-sparkle">✨</span>
               <span>AuraPlan Creative Studio</span>
             </div>
-            <p class="text-secondary text-sm">Tell the AI what vibe, activity, or food you want to brainstorm</p>
+            <p class="text-secondary text-sm">Use the local demo helper to organize an idea around a vibe, activity, or food</p>
           </div>
           <div class="idea-gen-input-wrap">
             <input type="text" id="custom-idea-input" placeholder="e.g. A whimsical late-night dessert station or interactive cocktail ritual..." class="form-input" />
@@ -120,10 +120,10 @@ class IdeasManager {
           <div class="speech-workshop-header">
             <div>
               <h3 class="card-title">Speech, Toast & Invitation Workshop</h3>
-              <p class="card-subtitle">AI-assisted drafts for speeches, welcomes, and digital invitations</p>
+              <p class="card-subtitle">Local example drafts for speeches, welcomes, and digital invitations; no live model is connected.</p>
             </div>
             <div class="speech-controls">
-              <select id="speech-tone" class="select-dropdown">
+              <select id="speech-tone" class="select-dropdown" aria-label="Choose a draft tone">
                 <option value="heartfelt">Heartfelt & Emotional</option>
                 <option value="humorous">Witty & Humorous</option>
                 <option value="formal">Elegant & Formal</option>
@@ -244,13 +244,13 @@ class IdeasManager {
     const keyword = input.value.trim();
     const evt = this.getCurrentEvent();
 
-    this.app.showToast("Synthesizing creative concept...", "info");
+    this.app.showToast("Creating a local demo concept...", "info");
 
     const newIdea = {
       title: keyword.length > 30 ? keyword.slice(0, 30) + "..." : keyword,
       category: "Personalized Experience",
       description: `An immersive ${keyword.toLowerCase()} tailored for ${evt.title}. Features custom styling, thoughtful guest flow, and seamless coordination with existing vendor schedules.`,
-      tags: ["Custom", "AI-Generated", "Memorable"],
+      tags: ["Custom", "Local Demo", "Memorable"],
       impact: "High guest resonance"
     };
 
@@ -267,7 +267,7 @@ class IdeasManager {
     const container = document.getElementById("speech-output-container");
     if (!container) return;
 
-    container.innerHTML = `<div class="speech-loading"><span class="ai-sparkle">✨</span> Drafting ${tone} speech with AuraPlan AI...</div>`;
+    container.innerHTML = `<div class="speech-loading"><span class="ai-sparkle">✨</span> Preparing a local demo ${tone} speech draft...</div>`;
 
     const prompt = `Draft a ${tone} speech/toast for ${evt.title} (${evt.type}).`;
     const draft = await window.auraAI.ask(prompt, evt);
@@ -295,7 +295,7 @@ class IdeasManager {
     const container = document.getElementById("speech-output-container");
     if (!container) return;
 
-    container.innerHTML = `<div class="speech-loading"><span class="ai-sparkle">✨</span> Drafting digital invitation copy with AuraPlan AI...</div>`;
+    container.innerHTML = `<div class="speech-loading"><span class="ai-sparkle">✨</span> Preparing local demo invitation copy...</div>`;
 
     const prompt = `Draft invitation copy for ${evt.title} on ${evt.date} in a ${tone} tone.`;
     const draft = await window.auraAI.ask(prompt, evt);

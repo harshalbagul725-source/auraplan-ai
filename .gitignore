@@ -7,6 +7,9 @@ desktop.ini
 .env
 .env.local
 *.log
+node_modules/
+test-results/
+playwright-report/
 
 # Editor directories
 .vscode/
@@ -16,4 +19,3 @@ desktop.ini
 *.webp
 *.mp4
 *demo*
-

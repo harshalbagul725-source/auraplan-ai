@@ -30,39 +30,7 @@ class BudgetManager {
   }
 
   getCalculations() {
-    const evt = this.getCurrentEvent();
-    const expenses = evt.expenses || [];
-    
-    const target = Number(evt.targetBudget || 0);
-    const totalEstimated = expenses.reduce((sum, item) => sum + Number(item.estimated || 0), 0);
-    const totalActual = expenses.reduce((sum, item) => sum + Number(item.actual || item.estimated || 0), 0);
-    const totalPaid = expenses.reduce((sum, item) => sum + Number(item.paid || 0), 0);
-    const balanceDue = totalActual - totalPaid;
-    const remainingCushion = target - totalActual;
-    const spentPercent = target > 0 ? Math.min(100, Math.round((totalActual / target) * 100)) : 0;
-
-    // Group by category
-    const byCategory = {};
-    expenses.forEach(item => {
-      const cat = item.category || "General";
-      if (!byCategory[cat]) {
-        byCategory[cat] = { actual: 0, estimated: 0, count: 0 };
-      }
-      byCategory[cat].actual += Number(item.actual || item.estimated || 0);
-      byCategory[cat].estimated += Number(item.estimated || 0);
-      byCategory[cat].count += 1;
-    });
-
-    return {
-      target,
-      totalEstimated,
-      totalActual,
-      totalPaid,
-      balanceDue,
-      remainingCushion,
-      spentPercent,
-      byCategory
-    };
+    return AuraPlanCore.calculateBudget(this.getCurrentEvent());
   }
 
   render() {
@@ -133,7 +101,7 @@ class BudgetManager {
               </div>
               <button class="btn btn-outline btn-sm" id="btn-open-allocator">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-                AI Auto-Allocator
+                Budget Suggestions
               </button>
             </div>
             <div class="chart-body">
@@ -151,9 +119,9 @@ class BudgetManager {
             <div class="ai-budget-header">
               <div class="ai-badge">
                 <span class="ai-sparkle">✨</span>
-                <span>AuraPlan AI Finance Co-Pilot</span>
+                <span>AuraPlan Budget Snapshot</span>
               </div>
-              <button class="btn btn-sm btn-ghost" id="btn-refresh-budget-ai" title="Re-analyze budget with AI">
+              <button class="btn btn-sm btn-ghost" id="btn-refresh-budget-ai" title="Refresh budget summary">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
               </button>
             </div>
@@ -192,13 +160,13 @@ class BudgetManager {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <input type="text" id="expense-search" placeholder="Search item, vendor..." value="${this.searchQuery}" />
               </div>
-              <select id="expense-filter-cat" class="select-dropdown">
+              <select id="expense-filter-cat" class="select-dropdown" aria-label="Filter expenses by category">
                 <option value="all">All Categories</option>
                 ${Object.keys(calc.byCategory).map(cat => `
                   <option value="${cat}" ${this.categoryFilter === cat ? 'selected' : ''}>${cat}</option>
                 `).join('')}
               </select>
-              <select id="expense-filter-status" class="select-dropdown">
+              <select id="expense-filter-status" class="select-dropdown" aria-label="Filter expenses by payment status">
                 <option value="all" ${this.statusFilter === 'all' ? 'selected' : ''}>All Statuses</option>
                 <option value="Paid" ${this.statusFilter === 'Paid' ? 'selected' : ''}>Paid in Full</option>
                 <option value="Deposit Paid" ${this.statusFilter === 'Deposit Paid' ? 'selected' : ''}>Deposit Paid</option>

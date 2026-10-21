@@ -1,0 +1,17 @@
+{
+  "name": "auraplan-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static event planning studio with automated quality checks",
+  "scripts": {
+    "test": "node --test tests/planning-core.test.cjs",
+    "test:watch": "node --watch --test tests/planning-core.test.cjs",
+    "test:coverage": "node --experimental-test-coverage --test-coverage-include=js/planning-core.js --test-coverage-lines=90 --test-coverage-functions=90 --test-coverage-branches=70 --test tests/planning-core.test.cjs",
+    "test:e2e": "playwright test",
+    "check": "node scripts/check-syntax.cjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.64.1"
+  }
+}
