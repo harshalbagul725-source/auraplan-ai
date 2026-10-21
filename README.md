@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Vanilla JS](https://img.shields.io/badge/Built%20With-HTML5%20%2B%20Vanilla%20CSS%20%2B%20ES6-6366f1.svg)](#technology-stack)
 [![AI Engine](https://img.shields.io/badge/Planner-Local%20Demo%20Mode-6366f1.svg)](#ai-co-pilot-studio)
-[![Repository Size](https://img.shields.io/badge/Repo%20Size-%3C%201%20MB-success.svg)](#lightweight-architecture)
+[![Repository Size](https://img.shields.io/badge/Repo%20Size-%3C%2010%20MB-success.svg)](#lightweight-architecture)
 
 ---
 
@@ -324,7 +324,7 @@ Use the **Settings Gear** (`⚙️`) to choose an event currency or export a loc
 ## 🪶 Lightweight Architecture (< 10 MB)
 
 This repository is optimized to ensure maximum performance and minimal footprint:
-- **Total Repository Footprint:** **~1.1 MB** (well below the 10 MB limit).
+- **Tracked project files:** **~1.1 MB**; the local Git object database is **~6 MB**. Both are below the 10 MB target.
 - **Optimized Assets:** High-resolution photography compressed with sub-300KB payloads without visual artifacting.
 - **Zero Heavy Dependencies:** No `node_modules`, no external build bloat, and pure native browser execution.
 
