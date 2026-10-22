@@ -2948,3 +2948,192 @@ body {
     -webkit-print-color-adjust: exact;
   }
 }
+
+.overview-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.overview-intro,
+.overview-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.overview-intro {
+  padding: 1.35rem;
+}
+
+.overview-intro .card-title {
+  margin: 0.5rem 0 0.2rem;
+  overflow-wrap: anywhere;
+}
+
+.overview-metrics {
+  margin: 0;
+}
+
+.overview-metrics .metric-card {
+  min-width: 0;
+}
+
+.overview-metrics .metric-value {
+  margin: 0.35rem 0;
+  overflow-wrap: anywhere;
+}
+
+.overview-content-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.overview-panel {
+  min-width: 0;
+  padding: 1.25rem;
+}
+
+.overview-panel-heading {
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.overview-panel-heading .card-title {
+  margin-bottom: 0.2rem;
+}
+
+.overview-task-list,
+.overview-vendor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  list-style: none;
+}
+
+.overview-task-list li,
+.overview-vendor-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.overview-task-date {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.overview-task-title {
+  overflow-wrap: anywhere;
+}
+
+.overview-vendor-list li {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.overview-check {
+  color: var(--text-secondary);
+}
+
+.overview-check.is-covered {
+  color: var(--color-emerald);
+}
+
+.overview-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.overview-disclaimer {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.personalized-ideas-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.personalized-ideas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 0.75rem;
+}
+
+.personalized-idea-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.personalized-idea-card h4,
+.personalized-idea-card p {
+  overflow-wrap: anywhere;
+}
+
+.personalized-idea-card p {
+  flex: 1;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.vendor-checklist {
+  padding: 1.25rem;
+}
+
+.vendor-checklist-heading {
+  margin-bottom: 0.9rem;
+}
+
+.vendor-checklist-heading .card-title {
+  margin-bottom: 0.2rem;
+}
+
+.vendor-checklist .overview-vendor-list li {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+}
+
+@media (max-width: 700px) {
+  .overview-content-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .overview-intro,
+  .overview-panel-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .overview-task-list li,
+  .overview-vendor-list li {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .overview-task-list li > :last-child,
+  .overview-vendor-list li > :last-child {
+    grid-column: 2;
+  }
+
+  .vendor-checklist .overview-vendor-list li {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .overview-shortcuts .btn {
+    flex: 1 1 100%;
+  }
+}

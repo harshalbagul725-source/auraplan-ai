@@ -19,20 +19,47 @@ class IdeasManager {
     const evt = this.getCurrentEvent();
     const ideas = evt.personalizedIdeas || [];
     const palette = evt.colorPalette || [];
+    const recommendations = AuraPlanCore.buildPersonalizedIdeas(evt);
+    const defaultImages = {
+      wedding: "assets/wedding.jpg",
+      birthday: "assets/birthday.jpg",
+      community: "assets/community.jpg"
+    };
+    const heroImage = defaultImages[evt.type] || defaultImages.community;
 
     container.innerHTML = `
       <div class="ideas-dashboard">
         <!-- Visual Moodboard Hero Banner -->
         <div class="moodboard-hero glass-card">
           <div class="moodboard-image-wrap">
-            <img src="${evt.heroImage || 'assets/wedding.jpg'}" alt="${evt.title} Moodboard" class="moodboard-hero-img" />
+            <img src="${heroImage}" alt="${AuraPlanCore.escapeHTML(evt.title)} moodboard" class="moodboard-hero-img" />
             <div class="moodboard-overlay">
-              <span class="badge badge-accent">${evt.type.toUpperCase()} MOODBOARD</span>
-              <h2 class="moodboard-hero-title">${evt.theme || evt.title}</h2>
-              <p class="moodboard-hero-subtitle">${evt.tagline || ''}</p>
+              <span class="badge badge-accent">${AuraPlanCore.escapeHTML(evt.type.toUpperCase())} MOODBOARD</span>
+              <h2 class="moodboard-hero-title">${AuraPlanCore.escapeHTML(evt.theme || evt.title)}</h2>
+              <p class="moodboard-hero-subtitle">${AuraPlanCore.escapeHTML(evt.tagline || '')}</p>
             </div>
           </div>
         </div>
+
+        <section class="glass-card personalized-ideas-section">
+          <div class="ideas-section-header">
+            <div>
+              <span class="badge badge-info">LOCAL PLANNING PROMPTS</span>
+              <h3 class="card-title">Suggestions for this event</h3>
+              <p class="card-subtitle">Deterministic prompts use your event type, budget per guest, guest count, theme, and saved priorities. They are not AI-generated.</p>
+            </div>
+          </div>
+          <div class="personalized-ideas-grid">
+            ${recommendations.map((idea, idx) => `
+              <article class="personalized-idea-card">
+                <span class="category-tag-sm">${AuraPlanCore.escapeHTML(idea.category)}</span>
+                <h4>${AuraPlanCore.escapeHTML(idea.title)}</h4>
+                <p>${AuraPlanCore.escapeHTML(idea.description)}</p>
+                <button class="btn btn-outline btn-sm" type="button" data-action="save-recommendation" data-index="${idx}">Save concept</button>
+              </article>
+            `).join("")}
+          </div>
+        </section>
 
         <!-- Color Palette Showcase -->
         <div class="palette-card glass-card">
@@ -46,18 +73,20 @@ class IdeasManager {
             </button>
           </div>
           <div class="palette-grid">
-            ${palette.map(color => `
-              <div class="swatch-card" data-hex="${color.hex}">
-                <div class="swatch-color" style="background-color: ${color.hex}">
+            ${palette.map(color => {
+              const hex = /^#[\da-f]{3,8}$/i.test(color.hex) ? color.hex : "#8b5cf6";
+              return `
+              <div class="swatch-card" data-hex="${AuraPlanCore.escapeHTML(hex)}">
+                <div class="swatch-color" style="background-color: ${hex}">
                   <span class="copy-hint">Copy HEX</span>
                 </div>
                 <div class="swatch-details">
-                  <span class="swatch-name">${color.name}</span>
-                  <span class="swatch-hex">${color.hex}</span>
-                  <span class="swatch-role">${color.role || 'Accent'}</span>
+                  <span class="swatch-name">${AuraPlanCore.escapeHTML(color.name)}</span>
+                  <span class="swatch-hex">${AuraPlanCore.escapeHTML(hex)}</span>
+                  <span class="swatch-role">${AuraPlanCore.escapeHTML(color.role || 'Accent')}</span>
                 </div>
               </div>
-            `).join("")}
+            `}).join("")}
           </div>
         </div>
 
@@ -71,7 +100,7 @@ class IdeasManager {
             <p class="text-secondary text-sm">Use the local demo helper to organize an idea around a vibe, activity, or food</p>
           </div>
           <div class="idea-gen-input-wrap">
-            <input type="text" id="custom-idea-input" placeholder="e.g. A whimsical late-night dessert station or interactive cocktail ritual..." class="form-input" />
+            <input type="text" id="custom-idea-input" maxlength="120" placeholder="e.g. A whimsical late-night dessert station or interactive cocktail ritual..." class="form-input" />
             <button class="btn btn-primary" id="btn-generate-custom-idea">
               <span class="ai-sparkle">✨</span> Generate Idea Card
             </button>
@@ -90,23 +119,23 @@ class IdeasManager {
               <div class="idea-card glass-card" data-idea-index="${idx}">
                 <div class="idea-card-header">
                   <div class="idea-category-wrap">
-                    <span class="category-tag-sm">${idea.category}</span>
-                    <span class="idea-impact">${idea.impact || 'High Impact'}</span>
+                    <span class="category-tag-sm">${AuraPlanCore.escapeHTML(idea.category)}</span>
+                    <span class="idea-impact">${AuraPlanCore.escapeHTML(idea.impact || 'High Impact')}</span>
                   </div>
                   <button class="btn-icon text-danger" data-action="delete-idea" data-index="${idx}" title="Remove Concept">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                   </button>
                 </div>
-                <h4 class="idea-title">${idea.title}</h4>
-                <p class="idea-desc">${idea.description}</p>
+                <h4 class="idea-title">${AuraPlanCore.escapeHTML(idea.title)}</h4>
+                <p class="idea-desc">${AuraPlanCore.escapeHTML(idea.description)}</p>
                 <div class="idea-tags">
-                  ${(idea.tags || []).map(t => `<span class="idea-tag-chip">#${t}</span>`).join("")}
+                  ${(idea.tags || []).map(t => `<span class="idea-tag-chip">#${AuraPlanCore.escapeHTML(t)}</span>`).join("")}
                 </div>
                 <div class="idea-card-footer">
-                  <button class="btn-text-action" data-action="expand-idea" data-title="${idea.title}">
+                  <button class="btn-text-action" data-action="expand-idea" data-title="${AuraPlanCore.escapeHTML(idea.title)}">
                     <span class="ai-sparkle">✨</span> Brainstorm Execution
                   </button>
-                  <button class="btn btn-outline btn-sm" data-action="add-idea-budget" data-title="${idea.title}">
+                  <button class="btn btn-outline btn-sm" data-action="add-idea-budget" data-title="${AuraPlanCore.escapeHTML(idea.title)}">
                     + Add to Budget
                   </button>
                 </div>
@@ -154,11 +183,7 @@ class IdeasManager {
     document.querySelectorAll(".swatch-card").forEach(swatch => {
       swatch.addEventListener("click", () => {
         const hex = swatch.dataset.hex;
-        if (hex) {
-          navigator.clipboard.writeText(hex).then(() => {
-            this.app.showToast(`Copied ${hex} to clipboard!`, "success");
-          });
-        }
+        if (hex) this.copyToClipboard(hex, `Copied ${hex} to clipboard!`);
       });
     });
 
@@ -224,17 +249,40 @@ class IdeasManager {
         }
       });
     }
+
+    document.querySelector(".personalized-ideas-section")?.addEventListener("click", event => {
+      const button = event.target.closest("[data-action='save-recommendation']");
+      if (button) this.saveRecommendation(Number(button.dataset.index));
+    });
+  }
+
+  saveRecommendation(index) {
+    const recommendation = AuraPlanCore.buildPersonalizedIdeas(this.getCurrentEvent())[index];
+    if (!recommendation) return;
+
+    const event = this.getCurrentEvent();
+    if (!Array.isArray(event.personalizedIdeas)) event.personalizedIdeas = [];
+    if (event.personalizedIdeas.some(idea => idea.title === recommendation.title)) {
+      this.app.showToast("This concept is already saved to your moodboard", "info");
+      return;
+    }
+
+    event.personalizedIdeas.unshift(recommendation);
+    this.app.saveCurrentEvent();
+    this.render();
+    this.app.showToast("Concept saved to your moodboard", "success");
   }
 
   deleteIdea(idx) {
     const evt = this.getCurrentEvent();
+    if (!Array.isArray(evt.personalizedIdeas) || !evt.personalizedIdeas[idx]) return;
     const [deleted] = evt.personalizedIdeas.splice(idx, 1);
     this.app.saveCurrentEvent();
     this.render();
     this.app.showToast(`Removed concept "${deleted.title}"`, "info");
   }
 
-  async generateCustomIdea() {
+  generateCustomIdea() {
     const input = document.getElementById("custom-idea-input");
     if (!input || !input.value.trim()) {
       this.app.showToast("Please enter a concept or keyword", "warning");
@@ -254,6 +302,7 @@ class IdeasManager {
       impact: "High guest resonance"
     };
 
+    if (!Array.isArray(evt.personalizedIdeas)) evt.personalizedIdeas = [];
     evt.personalizedIdeas.unshift(newIdea);
     this.app.saveCurrentEvent();
     input.value = "";
@@ -270,7 +319,15 @@ class IdeasManager {
     container.innerHTML = `<div class="speech-loading"><span class="ai-sparkle">✨</span> Preparing a local demo ${tone} speech draft...</div>`;
 
     const prompt = `Draft a ${tone} speech/toast for ${evt.title} (${evt.type}).`;
-    const draft = await window.auraAI.ask(prompt, evt);
+    let draft;
+    try {
+      draft = await window.auraAI.ask(prompt, evt);
+    } catch (error) {
+      console.error("Could not create a local speech draft.", error);
+      this.app.showToast("The local speech helper could not create a draft.", "danger");
+      container.innerHTML = '<p class="text-secondary">Draft generation failed. Please try again.</p>';
+      return;
+    }
 
     container.innerHTML = `
       <div class="speech-result">
@@ -282,11 +339,9 @@ class IdeasManager {
       </div>
     `;
 
-    document.getElementById("btn-copy-speech")?.addEventListener("click", () => {
-      navigator.clipboard.writeText(draft).then(() => {
-        this.app.showToast("Speech draft copied to clipboard!", "success");
-      });
-    });
+    document.getElementById("btn-copy-speech")?.addEventListener("click", () =>
+      this.copyToClipboard(draft, "Speech draft copied to clipboard!")
+    );
   }
 
   async generateInvite() {
@@ -298,7 +353,15 @@ class IdeasManager {
     container.innerHTML = `<div class="speech-loading"><span class="ai-sparkle">✨</span> Preparing local demo invitation copy...</div>`;
 
     const prompt = `Draft invitation copy for ${evt.title} on ${evt.date} in a ${tone} tone.`;
-    const draft = await window.auraAI.ask(prompt, evt);
+    let draft;
+    try {
+      draft = await window.auraAI.ask(prompt, evt);
+    } catch (error) {
+      console.error("Could not create local invitation copy.", error);
+      this.app.showToast("The local invitation helper could not create a draft.", "danger");
+      container.innerHTML = '<p class="text-secondary">Draft generation failed. Please try again.</p>';
+      return;
+    }
 
     container.innerHTML = `
       <div class="speech-result">
@@ -310,10 +373,22 @@ class IdeasManager {
       </div>
     `;
 
-    document.getElementById("btn-copy-speech")?.addEventListener("click", () => {
-      navigator.clipboard.writeText(draft).then(() => {
-        this.app.showToast("Invitation copy copied to clipboard!", "success");
-      });
-    });
+    document.getElementById("btn-copy-speech")?.addEventListener("click", () =>
+      this.copyToClipboard(draft, "Invitation copy copied to clipboard!")
+    );
+  }
+
+  async copyToClipboard(text, successMessage) {
+    if (!navigator.clipboard?.writeText) {
+      this.app.showToast("Clipboard access is unavailable in this browser.", "warning");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      this.app.showToast(successMessage, "success");
+    } catch (error) {
+      console.error("Could not write to the clipboard.", error);
+      this.app.showToast("Clipboard access was denied. You can still select and copy the text.", "warning");
+    }
   }
 }

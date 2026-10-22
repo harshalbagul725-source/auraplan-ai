@@ -28,6 +28,7 @@ class VendorManager {
     const totalContracted = vendors.reduce((sum, v) => sum + Number(v.quote || 0), 0);
     const totalDeposits = vendors.reduce((sum, v) => sum + Number(v.depositPaid || 0), 0);
     const confirmedCount = vendors.filter(v => v.status === "Confirmed" || v.status === "Deposit Paid" || v.status === "Contract Signed").length;
+    const checklist = AuraPlanCore.summarizeDashboard(evt).vendorChecklist;
 
     // Unique categories
     const categories = Array.from(new Set(vendors.map(v => v.category || "General")));
@@ -70,12 +71,31 @@ class VendorManager {
           </div>
         </div>
 
+        <section class="glass-card vendor-checklist">
+          <div class="vendor-checklist-heading">
+            <div>
+              <h3 class="card-title">Recommended vendor checklist</h3>
+              <p class="card-subtitle">${checklist.covered} of ${checklist.total} event-specific categories have a vendor record.</p>
+            </div>
+          </div>
+          <ul class="overview-vendor-list">
+            ${checklist.items.map(item => `
+              <li>
+                <span class="overview-check ${item.covered ? "is-covered" : ""}" aria-hidden="true">${item.covered ? "✓" : "○"}</span>
+                <span>${AuraPlanCore.escapeHTML(item.category)}</span>
+                <span class="text-secondary">${AuraPlanCore.escapeHTML(item.status || "Not added")}</span>
+                ${item.covered ? "" : `<button type="button" class="btn btn-outline btn-sm" data-action="add-checklist-vendor" data-category="${AuraPlanCore.escapeHTML(item.category)}">Add vendor</button>`}
+              </li>
+            `).join("")}
+          </ul>
+        </section>
+
         <!-- Vendor Controls & AI Help Bar -->
         <div class="vendor-controls-bar glass-card">
           <div class="vendor-filters-wrap">
             <select id="vendor-filter-cat" class="select-dropdown" aria-label="Filter vendors by category">
               <option value="all">All Vendor Categories</option>
-              ${categories.map(c => `<option value="${c}" ${this.catFilter === c ? 'selected' : ''}>${c}</option>`).join('')}
+              ${categories.map(c => `<option value="${AuraPlanCore.escapeHTML(c)}" ${this.catFilter === c ? 'selected' : ''}>${AuraPlanCore.escapeHTML(c)}</option>`).join('')}
             </select>
             <select id="vendor-filter-status" class="select-dropdown" aria-label="Filter vendors by pipeline stage">
               <option value="all" ${this.statusFilter === 'all' ? 'selected' : ''}>All Pipeline Stages</option>
@@ -128,24 +148,24 @@ class VendorManager {
 
     return filtered.map(v => {
       const stageIdx = Math.max(0, stages.indexOf(v.status));
-      const isConfirmed = v.status === "Confirmed";
+      const rating = Math.min(5, Math.max(0, Number(v.rating) || 5));
 
       return `
-        <div class="vendor-card glass-card" data-vendor-id="${v.id}">
+        <div class="vendor-card glass-card" data-vendor-id="${AuraPlanCore.escapeHTML(v.id)}">
           <div class="vendor-card-header">
             <div>
-              <span class="category-tag-sm">${v.category}</span>
-              <h3 class="vendor-name">${v.name}</h3>
+              <span class="category-tag-sm">${AuraPlanCore.escapeHTML(v.category)}</span>
+              <h3 class="vendor-name">${AuraPlanCore.escapeHTML(v.name)}</h3>
             </div>
             <div class="vendor-rating">
-              ${'★'.repeat(v.rating || 5)}${'☆'.repeat(5 - (v.rating || 5))}
+              ${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}
             </div>
           </div>
 
           <div class="vendor-pipeline-stepper">
             <div class="stepper-label">
-              <span>Status: <strong>${v.status}</strong></span>
-              <button class="btn-advance-status" data-action="advance-stage" data-id="${v.id}" title="Advance to next pipeline stage">
+              <span>Status: <strong>${AuraPlanCore.escapeHTML(v.status)}</strong></span>
+              <button class="btn-advance-status" data-action="advance-stage" data-id="${AuraPlanCore.escapeHTML(v.id)}" title="Advance to next pipeline stage">
                 Advance Stage ➔
               </button>
             </div>
@@ -158,19 +178,19 @@ class VendorManager {
             ${v.contactName ? `
               <div class="contact-row">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <span>${v.contactName}</span>
+                <span>${AuraPlanCore.escapeHTML(v.contactName)}</span>
               </div>
             ` : ''}
             ${v.phone ? `
               <div class="contact-row">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                <a href="tel:${v.phone}">${v.phone}</a>
+                <a href="tel:${AuraPlanCore.escapeHTML(v.phone)}">${AuraPlanCore.escapeHTML(v.phone)}</a>
               </div>
             ` : ''}
             ${v.email ? `
               <div class="contact-row">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                <a href="mailto:${v.email}">${v.email}</a>
+                <a href="mailto:${AuraPlanCore.escapeHTML(v.email)}">${AuraPlanCore.escapeHTML(v.email)}</a>
               </div>
             ` : ''}
           </div>
@@ -186,21 +206,21 @@ class VendorManager {
             </div>
             <div class="vfin-item">
               <span class="vfin-label">Remaining</span>
-              <span class="vfin-val">${this.formatCurrency(v.quote - v.depositPaid)}</span>
+              <span class="vfin-val">${this.formatCurrency(Math.max(0, Number(v.quote || 0) - Number(v.depositPaid || 0)))}</span>
             </div>
           </div>
 
           ${v.notes ? `
             <div class="vendor-notes">
-              <span class="notes-tag">Internal Note:</span> ${v.notes}
+              <span class="notes-tag">Internal Note:</span> ${AuraPlanCore.escapeHTML(v.notes)}
             </div>
           ` : ''}
 
           <div class="vendor-card-footer">
-            <button class="btn-text-action" data-action="ask-ai-vendor" data-cat="${v.category}">
+            <button class="btn-text-action" data-action="ask-ai-vendor" data-cat="${AuraPlanCore.escapeHTML(v.category)}">
               <span class="ai-sparkle">✨</span> Questions to Ask
             </button>
-            <button class="btn-icon text-danger" data-action="delete-vendor" data-id="${v.id}" title="Remove Vendor">
+            <button class="btn-icon text-danger" data-action="delete-vendor" data-id="${AuraPlanCore.escapeHTML(v.id)}" title="Remove Vendor">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </button>
           </div>
@@ -265,6 +285,11 @@ class VendorManager {
         }
       });
     }
+
+    document.querySelector(".vendor-checklist")?.addEventListener("click", event => {
+      const button = event.target.closest("[data-action='add-checklist-vendor']");
+      if (button) this.openAddVendorModal(button.dataset.category);
+    });
   }
 
   advanceVendorStage(id) {
@@ -295,7 +320,26 @@ class VendorManager {
     this.app.showToast(`Removed vendor "${deleted.name}"`, "info");
   }
 
-  openAddVendorModal() {
+  openAddVendorModal(preselectedCategory = "") {
+    const normalizedCategory = preselectedCategory === "Decor"
+      ? "Decor & Florals"
+      : preselectedCategory === "Cake & Desserts"
+        ? "Catering"
+        : preselectedCategory;
+    const categoryOptions = [
+      ["Venue", "Venue"],
+      ["Catering", "Catering"],
+      ["Photography", "Photography & Video"],
+      ["Decor & Florals", "Decor & Florals"],
+      ["Entertainment", "Entertainment"],
+      ["Cake & Desserts", "Cake & Desserts"],
+      ["Music", "DJ / Band / Music"],
+      ["Audio/Visual", "Audio / Visual & Lighting"],
+      ["Rentals", "Furniture & Rentals"],
+      ["Sanitation", "Sanitation & Logistics"],
+      ["Permits & Safety", "Permits & Safety"],
+      ["Other", "Other"]
+    ];
     this.app.showModal({
       title: "Add Vendor / Supplier",
       content: `
@@ -303,37 +347,29 @@ class VendorManager {
           <div class="form-row">
             <div class="form-group">
               <label>Company / Vendor Name *</label>
-              <input type="text" name="name" required placeholder="e.g. Apex Cinematic Studios" class="form-input" />
+              <input type="text" name="name" required maxlength="120" placeholder="e.g. Apex Cinematic Studios" class="form-input" />
             </div>
             <div class="form-group">
               <label>Category *</label>
               <select name="category" class="form-input">
-                <option value="Venue">Venue</option>
-                <option value="Catering">Catering</option>
-                <option value="Photography">Photography & Video</option>
-                <option value="Music">DJ / Band / Music</option>
-                <option value="Decor & Florals">Decor & Florals</option>
-                <option value="Audio/Visual">Audio / Visual & Lighting</option>
-                <option value="Rentals">Furniture & Rentals</option>
-                <option value="Sanitation">Sanitation & Logistics</option>
-                <option value="Permits & Safety">Permits & Safety</option>
+                ${categoryOptions.map(([value, label]) => `<option value="${value}" ${normalizedCategory === value ? "selected" : ""}>${label}</option>`).join("")}
               </select>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Primary Contact Name</label>
-              <input type="text" name="contactName" placeholder="e.g. Claire Dawson" class="form-input" />
+              <input type="text" name="contactName" maxlength="100" placeholder="e.g. Claire Dawson" class="form-input" />
             </div>
             <div class="form-group">
               <label>Email Address</label>
-              <input type="email" name="email" placeholder="contact@apexcinematic.com" class="form-input" />
+              <input type="email" name="email" maxlength="254" placeholder="contact@apexcinematic.com" class="form-input" />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Phone Number</label>
-              <input type="tel" name="phone" placeholder="+1 (555) 019-2831" class="form-input" />
+              <input type="tel" name="phone" maxlength="40" placeholder="+1 (555) 019-2831" class="form-input" />
             </div>
             <div class="form-group">
               <label>Pipeline Stage</label>
@@ -350,36 +386,40 @@ class VendorManager {
           <div class="form-row">
             <div class="form-group">
               <label>Quote / Contract Amount</label>
-              <input type="number" name="quote" step="50" placeholder="3500" class="form-input" />
+              <input type="number" name="quote" min="0" step="any" placeholder="3500" class="form-input" />
             </div>
             <div class="form-group">
               <label>Deposit Paid</label>
-              <input type="number" name="depositPaid" step="50" placeholder="1000" class="form-input" />
+              <input type="number" name="depositPaid" min="0" step="any" placeholder="1000" class="form-input" />
             </div>
           </div>
           <div class="form-group">
             <label>Important Notes / Clauses</label>
-            <textarea name="notes" rows="2" placeholder="e.g. Needs loading dock access at 10 AM, includes drone permit" class="form-input"></textarea>
+            <textarea name="notes" rows="2" maxlength="1000" placeholder="e.g. Needs loading dock access at 10 AM, includes drone permit" class="form-input"></textarea>
           </div>
         </form>
       `,
       confirmText: "Save Vendor",
       onConfirm: () => {
         const form = document.getElementById("add-vendor-form");
-        if (!form) return;
+        if (!form || !form.reportValidity()) return false;
         const formData = new FormData(form);
-        const name = formData.get("name");
+        const name = String(formData.get("name") || "").trim();
         const category = formData.get("category");
-        const contactName = formData.get("contactName");
-        const email = formData.get("email");
-        const phone = formData.get("phone");
+        const contactName = String(formData.get("contactName") || "").trim();
+        const email = String(formData.get("email") || "").trim();
+        const phone = String(formData.get("phone") || "").trim();
         const status = formData.get("status");
         const quote = Number(formData.get("quote") || 0);
         const depositPaid = Number(formData.get("depositPaid") || 0);
-        const notes = formData.get("notes");
+        const notes = String(formData.get("notes") || "").trim();
 
         if (!name) {
           this.app.showToast("Please provide company name", "warning");
+          return false;
+        }
+        if (!Number.isFinite(quote) || !Number.isFinite(depositPaid) || quote < 0 || depositPaid < 0 || depositPaid > quote) {
+          this.app.showToast("Enter valid non-negative amounts; the deposit cannot exceed the quote.", "warning");
           return false;
         }
 

@@ -24,19 +24,77 @@ class AuraApp {
   }
 
   loadEvents() {
-    const saved = localStorage.getItem("auraplan_events");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error("Failed to parse saved events, using defaults", e);
+    try {
+      const saved = localStorage.getItem("auraplan_events");
+      if (!saved) return JSON.parse(JSON.stringify(DEFAULT_EVENTS));
+
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed)) {
+        throw new TypeError("Saved event data must be an array.");
       }
+
+      const recordSections = [
+        "budgetCategories",
+        "colorPalette",
+        "expenses",
+        "guests",
+        "milestones",
+        "personalizedIdeas",
+        "runOfShow",
+        "vendors"
+      ];
+      const supportedTypes = new Set(["wedding", "birthday", "community"]);
+      const events = parsed
+        .filter(event => event && typeof event === "object" && !Array.isArray(event) &&
+          typeof event.id === "string" && typeof event.title === "string")
+        .map(event => {
+          const normalized = {
+            ...event,
+            type: supportedTypes.has(event.type) ? event.type : "community",
+            title: event.title.trim() || "Untitled event",
+            date: String(event.date || ""),
+            time: String(event.time || ""),
+            location: String(event.location || ""),
+            guestCount: Number.isInteger(Number(event.guestCount)) && Number(event.guestCount) > 0
+              ? Number(event.guestCount)
+              : 0,
+            targetBudget: Number.isFinite(Number(event.targetBudget)) && Number(event.targetBudget) >= 0
+              ? Number(event.targetBudget)
+              : 0,
+            currency: String(event.currency || "USD"),
+            aiPrompts: Array.isArray(event.aiPrompts)
+              ? event.aiPrompts.filter(prompt => typeof prompt === "string")
+              : []
+          };
+          recordSections.forEach(section => {
+            normalized[section] = Array.isArray(event[section])
+              ? event[section].filter(item => item && typeof item === "object" && !Array.isArray(item))
+              : [];
+          });
+          return normalized;
+        });
+
+      if (!events.length) {
+        throw new TypeError("Saved event data does not contain any valid event records.");
+      }
+      if (events.length !== parsed.length) {
+        console.warn("Some invalid saved event records were ignored.");
+      }
+      return events;
+    } catch (error) {
+      console.error("Failed to load saved events; using default templates.", error);
     }
     return JSON.parse(JSON.stringify(DEFAULT_EVENTS));
   }
 
   saveEvents() {
-    localStorage.setItem("auraplan_events", JSON.stringify(this.events));
+    try {
+      localStorage.setItem("auraplan_events", JSON.stringify(this.events));
+    } catch (error) {
+      console.error("Failed to save event data.", error);
+      this.showToast("Event data could not be saved. Check browser storage availability and free space.", "danger");
+      throw error;
+    }
   }
 
   saveCurrentEvent() {
@@ -87,13 +145,11 @@ class AuraApp {
     }
 
     // Top KPI metrics in header
-    const totalSpent = (evt.expenses || []).reduce((sum, item) => sum + Number(item.actual || item.estimated || 0), 0);
-    const target = Number(evt.targetBudget || 0);
-    const pct = target > 0 ? Math.min(100, Math.round((totalSpent / target) * 100)) : 0;
+    const budget = this.budgetManager.getCalculations();
 
     const budgetKpi = document.getElementById("kpi-budget-progress");
     if (budgetKpi) {
-      budgetKpi.textContent = `${this.budgetManager.formatCurrency(totalSpent)} / ${this.budgetManager.formatCurrency(target)} (${pct}%)`;
+      budgetKpi.textContent = `${this.budgetManager.formatCurrency(budget.totalActual)} / ${this.budgetManager.formatCurrency(budget.target)} (${budget.spentPercent}%)`;
     }
 
     const vendorsKpi = document.getElementById("kpi-vendors-count");
@@ -109,8 +165,8 @@ class AuraApp {
 
     selector.innerHTML = `
       ${this.events.map(e => `
-        <option value="${e.id}" ${e.id === this.currentEvent.id ? 'selected' : ''}>
-          ${e.type === 'wedding' ? '💍' : e.type === 'birthday' ? '🎂' : '🎪'} ${e.title}
+        <option value="${AuraPlanCore.escapeHTML(e.id)}" ${e.id === this.currentEvent.id ? 'selected' : ''}>
+          ${e.type === 'wedding' ? '💍' : e.type === 'birthday' ? '🎂' : '🎪'} ${AuraPlanCore.escapeHTML(e.title)}
         </option>
       `).join('')}
       <option value="__NEW__">+ Create New Event...</option>
@@ -196,6 +252,9 @@ class AuraApp {
       case "ai":
         this.renderAIChatView();
         break;
+      case "dashboard":
+        this.renderDashboard();
+        break;
       case "budget":
         this.budgetManager.render();
         break;
@@ -223,6 +282,105 @@ class AuraApp {
     }
   }
 
+  renderDashboard() {
+    const container = document.getElementById("dashboard-tab-content");
+    if (!container) return;
+
+    const event = this.currentEvent;
+    const summary = AuraPlanCore.summarizeDashboard(event);
+    const tasks = summary.tasks;
+    const vendorChecklist = summary.vendorChecklist;
+
+    container.innerHTML = `
+      <div class="overview-dashboard">
+        <section class="overview-intro glass-card">
+          <div>
+            <span class="badge badge-info">EVENT OVERVIEW</span>
+            <h2 class="card-title">${AuraPlanCore.escapeHTML(event.title)}</h2>
+            <p class="card-subtitle">${AuraPlanCore.escapeHTML([event.type, event.date, event.location, `${event.guestCount} guests`].filter(Boolean).join(" · "))}</p>
+          </div>
+          <button class="btn btn-primary" type="button" data-dashboard-tab="planner">Review event plan</button>
+        </section>
+
+        <section class="metrics-grid overview-metrics" aria-label="Event summary">
+          <article class="metric-card glass-card">
+            <span class="metric-label">Target budget</span>
+            <strong class="metric-value">${this.budgetManager.formatCurrency(summary.budget.target)}</strong>
+            <span class="metric-subtext">Estimated and actual expenses tracked</span>
+          </article>
+          <article class="metric-card glass-card">
+            <span class="metric-label">Remaining balance</span>
+            <strong class="metric-value ${summary.budget.remainingCushion < 0 ? "text-danger" : "text-success"}">${this.budgetManager.formatCurrency(summary.budget.remainingCushion)}</strong>
+            <span class="metric-subtext">${this.budgetManager.formatCurrency(summary.budget.totalActual)} committed / spent</span>
+          </article>
+          <article class="metric-card glass-card">
+            <span class="metric-label">Checklist progress</span>
+            <strong class="metric-value">${tasks.completed} / ${tasks.total}</strong>
+            <span class="metric-subtext">${tasks.percentComplete}% of timeline tasks complete${tasks.overdue ? ` · ${tasks.overdue} overdue` : ""}</span>
+          </article>
+          <article class="metric-card glass-card">
+            <span class="metric-label">Vendor coverage</span>
+            <strong class="metric-value">${vendorChecklist.covered} / ${vendorChecklist.total}</strong>
+            <span class="metric-subtext">${vendorChecklist.confirmed} fully confirmed</span>
+          </article>
+        </section>
+
+        <div class="overview-content-grid">
+          <section class="glass-card overview-panel">
+            <div class="overview-panel-heading">
+              <div>
+                <h3 class="card-title">Upcoming tasks</h3>
+                <p class="card-subtitle">The next dated items from your event timeline</p>
+              </div>
+              <button class="btn btn-outline btn-sm" type="button" data-dashboard-tab="timeline">Open timeline</button>
+            </div>
+            ${tasks.upcoming.length ? `
+              <ul class="overview-task-list">
+                ${tasks.upcoming.map(task => `
+                  <li>
+                    <span class="overview-task-date">${AuraPlanCore.escapeHTML(task.dueDate)}</span>
+                    <span class="overview-task-title">${AuraPlanCore.escapeHTML(task.title)}</span>
+                    <span class="badge ${task.status === "in-progress" ? "badge-info" : "badge-neutral"}">${AuraPlanCore.escapeHTML(task.status || "todo")}</span>
+                  </li>
+                `).join("")}
+              </ul>
+            ` : `<p class="text-secondary">${tasks.overdue ? `${tasks.overdue} overdue task${tasks.overdue === 1 ? "" : "s"} need attention. ` : ""}No upcoming dated tasks. Add deadlines in Timeline.</p>`}
+          </section>
+
+          <section class="glass-card overview-panel">
+            <div class="overview-panel-heading">
+              <div>
+                <h3 class="card-title">Vendor checklist</h3>
+                <p class="card-subtitle">${vendorChecklist.covered} of ${vendorChecklist.total} categories have a vendor record</p>
+              </div>
+              <button class="btn btn-outline btn-sm" type="button" data-dashboard-tab="vendors">Manage vendors</button>
+            </div>
+            <ul class="overview-vendor-list">
+              ${vendorChecklist.items.map(item => `
+                <li>
+                  <span class="overview-check ${item.covered ? "is-covered" : ""}" aria-hidden="true">${item.covered ? "✓" : "○"}</span>
+                  <span>${AuraPlanCore.escapeHTML(item.category)}</span>
+                  <span class="text-secondary">${AuraPlanCore.escapeHTML(item.status || "Not added")}</span>
+                </li>
+              `).join("")}
+            </ul>
+          </section>
+        </div>
+
+        <div class="overview-shortcuts" aria-label="Planning shortcuts">
+          <button class="btn btn-outline" type="button" data-dashboard-tab="budget">Review budget</button>
+          <button class="btn btn-outline" type="button" data-dashboard-tab="ideas">Explore event ideas</button>
+          <button class="btn btn-outline" type="button" data-dashboard-tab="ai">Open local planning helper</button>
+        </div>
+        <p class="overview-disclaimer">Planning data is saved in this browser. The built-in helper uses local demo suggestions; no live GenAI model or vendor-price service is connected.</p>
+      </div>
+    `;
+
+    container.querySelectorAll("[data-dashboard-tab]").forEach(button => {
+      button.addEventListener("click", () => this.switchTab(button.dataset.dashboardTab));
+    });
+  }
+
   /**
    * AI Planning Co-Pilot Studio
    */
@@ -235,14 +393,14 @@ class AuraApp {
       this.chatHistory[evt.id] = [
         {
           role: "assistant",
-          text: `👋 **Welcome to your AuraPlan AI Co-Pilot for ${evt.title}!**
+          text: `👋 **Welcome to your AuraPlan local planning helper for ${evt.title}!**
 
-I have analyzed your **${evt.type.toUpperCase()}** parameters:
+Your saved event details:
 - **Guests:** ${evt.guestCount}
 - **Target Budget:** ${this.budgetManager.formatCurrency(evt.targetBudget)}
 - **Theme:** *${evt.theme}*
 
-Ask me anything about vendor contracts, high-impact decor, run-of-show schedules, or cost-cutting strategies. Or click any quick action below to start!`
+Ask for planning prompts about vendors, decor, timelines, or your budget. Suggestions are local examples, not live AI responses or vendor quotes.`
         }
       ];
     }
@@ -254,11 +412,11 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
         <!-- AI Prompt Quick Launcher Bar -->
         <div class="ai-prompts-shelf glass-card">
           <div class="shelf-header">
-            <span class="shelf-label"><span class="ai-sparkle">✨</span> Recommended Planning Prompts for ${evt.type}:</span>
+            <span class="shelf-label"><span class="ai-sparkle">✨</span> Recommended Planning Prompts for ${AuraPlanCore.escapeHTML(evt.type)}:</span>
           </div>
           <div class="prompt-chips-scroll">
             ${(evt.aiPrompts || []).map(p => `
-              <button class="ai-preset-chip" data-prompt="${p}">${p}</button>
+              <button class="ai-preset-chip" data-prompt="${AuraPlanCore.escapeHTML(p)}">${AuraPlanCore.escapeHTML(p)}</button>
             `).join("")}
           </div>
         </div>
@@ -271,7 +429,7 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
         <!-- Chat Input Bar -->
         <div class="ai-input-card glass-card">
           <div class="ai-input-wrapper">
-            <textarea id="ai-chat-input" placeholder="Ask AuraPlan AI... (e.g. 'Draft a run-of-show for 140 guests', 'How do I cut $3,000 from catering?', 'Write a funny toast')" rows="2"></textarea>
+            <textarea id="ai-chat-input" maxlength="1000" placeholder="Ask the local planning helper... (e.g. 'Draft a run-of-show for 140 guests', 'Review my catering estimate', 'Write a funny toast')" rows="2"></textarea>
             <button class="btn btn-primary" id="btn-send-ai-chat">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
               <span>Ask AuraPlan</span>
@@ -319,8 +477,8 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
       const name = budgetMatch[2].trim();
       const cost = Number(budgetMatch[3]);
       actionsHtml += `
-        <button class="ai-action-btn" data-action="apply-budget" data-cat="${cat}" data-name="${name}" data-cost="${cost}">
-          + Add "${name}" ($${cost}) to Budget
+        <button class="ai-action-btn" data-action="apply-budget" data-cat="${AuraPlanCore.escapeHTML(cat)}" data-name="${AuraPlanCore.escapeHTML(name)}" data-cost="${cost}">
+          + Add "${AuraPlanCore.escapeHTML(name)}" ($${cost}) to Budget
         </button>
       `;
     }
@@ -332,8 +490,8 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
       const title = timeMatch[2].trim();
       const desc = timeMatch[3].trim();
       actionsHtml += `
-        <button class="ai-action-btn" data-action="apply-timeline" data-time="${time}" data-title="${title}" data-notes="${desc}">
-          + Add "${title}" (${time}) to Run-of-Show
+        <button class="ai-action-btn" data-action="apply-timeline" data-time="${AuraPlanCore.escapeHTML(time)}" data-title="${AuraPlanCore.escapeHTML(title)}" data-notes="${AuraPlanCore.escapeHTML(desc)}">
+          + Add "${AuraPlanCore.escapeHTML(title)}" (${AuraPlanCore.escapeHTML(time)}) to Run-of-Show
         </button>
       `;
     }
@@ -408,13 +566,20 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
   }
 
   async sendAIPrompt(promptText) {
+    const normalizedPrompt = String(promptText || "").trim();
+    if (!normalizedPrompt) return;
+    if (normalizedPrompt.length > 1000) {
+      this.showToast("Keep planning prompts to 1,000 characters or fewer.", "warning");
+      return;
+    }
+
     const evt = this.currentEvent;
     if (!this.chatHistory[evt.id]) {
       this.chatHistory[evt.id] = [];
     }
 
     // Add user message
-    this.chatHistory[evt.id].push({ role: "user", text: promptText });
+    this.chatHistory[evt.id].push({ role: "user", text: normalizedPrompt });
     this.renderAIChatView();
 
     const chatWindow = document.getElementById("ai-chat-messages");
@@ -435,13 +600,17 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
     this.scrollChatToBottom();
 
     // Stream generation
-    const finalResponse = await window.auraAI.ask(promptText, evt, (chunk) => {
-      const bubble = lastMsgEl.querySelector(".message-text");
-      if (bubble) bubble.innerHTML = this.formatMarkdown(chunk);
-      this.scrollChatToBottom();
-    });
-
-    aiMsgObj.text = finalResponse;
+    try {
+      aiMsgObj.text = await window.auraAI.ask(normalizedPrompt, evt, chunk => {
+        const bubble = lastMsgEl.querySelector(".message-text");
+        if (bubble) bubble.innerHTML = this.formatMarkdown(chunk);
+        this.scrollChatToBottom();
+      });
+    } catch (error) {
+      console.error("The local planning helper failed to create a response.", error);
+      aiMsgObj.text = "The local planning helper could not create a response. Please check your prompt and try again.";
+      this.showToast("The planning helper could not create a response.", "danger");
+    }
     this.renderAIChatView();
   }
 
@@ -454,7 +623,7 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
 
   formatMarkdown(text) {
     if (!text) return "";
-    let clean = text
+    let clean = AuraPlanCore.escapeHTML(text)
       .replace(/\[BUDGET_ITEM:[^\]]+\]/gi, "")
       .replace(/\[TIMELINE_ITEM:[^\]]+\]/gi, "")
       .replace(/### (.*?)\n/g, '<h4 class="md-h4">$1</h4>')
@@ -485,9 +654,9 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
         <div class="itinerary-header-bar">
           <div>
             <span class="badge badge-primary">MASTER EXECUTIVE ITINERARY</span>
-            <h1 class="itinerary-title">${evt.title}</h1>
+            <h1 class="itinerary-title">${AuraPlanCore.escapeHTML(evt.title)}</h1>
             <p class="itinerary-meta">
-              <strong>Date:</strong> ${evt.date} &bull; <strong>Time:</strong> ${evt.time} &bull; <strong>Location:</strong> ${evt.location}
+              <strong>Date:</strong> ${AuraPlanCore.escapeHTML(evt.date)} &bull; <strong>Time:</strong> ${AuraPlanCore.escapeHTML(evt.time)} &bull; <strong>Location:</strong> ${AuraPlanCore.escapeHTML(evt.location)}
             </p>
           </div>
           <button class="btn btn-primary" onclick="window.print()">
@@ -511,11 +680,11 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
             <tbody>
               ${(evt.runOfShow || []).map(r => `
                 <tr>
-                  <td><strong>${r.time}</strong></td>
-                  <td>${r.title}</td>
-                  <td>${r.lead || '—'}</td>
-                  <td>${r.location || '—'}</td>
-                  <td>${r.notes || '—'}</td>
+                  <td><strong>${AuraPlanCore.escapeHTML(r.time)}</strong></td>
+                  <td>${AuraPlanCore.escapeHTML(r.title)}</td>
+                  <td>${AuraPlanCore.escapeHTML(r.lead || '—')}</td>
+                  <td>${AuraPlanCore.escapeHTML(r.location || '—')}</td>
+                  <td>${AuraPlanCore.escapeHTML(r.notes || '—')}</td>
                 </tr>
               `).join("")}
             </tbody>
@@ -538,12 +707,12 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
             <tbody>
               ${(evt.vendors || []).map(v => `
                 <tr>
-                  <td><span class="category-tag-sm">${v.category}</span></td>
-                  <td><strong>${v.name}</strong></td>
-                  <td>${v.contactName || '—'}</td>
-                  <td>${v.phone || '—'}</td>
-                  <td>${v.email || '—'}</td>
-                  <td>${v.status}</td>
+                  <td><span class="category-tag-sm">${AuraPlanCore.escapeHTML(v.category)}</span></td>
+                  <td><strong>${AuraPlanCore.escapeHTML(v.name)}</strong></td>
+                  <td>${AuraPlanCore.escapeHTML(v.contactName || '—')}</td>
+                  <td>${AuraPlanCore.escapeHTML(v.phone || '—')}</td>
+                  <td>${AuraPlanCore.escapeHTML(v.email || '—')}</td>
+                  <td>${AuraPlanCore.escapeHTML(v.status)}</td>
                 </tr>
               `).join("")}
             </tbody>
@@ -629,7 +798,7 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
             </div>
             <div class="form-group">
               <label for="new-evt-title">Event Name / Title *</label>
-              <input id="new-evt-title" type="text" name="title" required placeholder="e.g. Maya's Golden 50th Jubilee" class="form-input" />
+              <input id="new-evt-title" type="text" name="title" maxlength="120" required placeholder="e.g. Maya's Golden 50th Jubilee" class="form-input" />
             </div>
           </div>
           <div class="form-row">
@@ -654,11 +823,11 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
           </div>
           <div class="form-group">
             <label for="new-evt-location">Location / City</label>
-            <input id="new-evt-location" type="text" name="location" placeholder="e.g. Glasshouse Pavilion, Chicago, IL" class="form-input" />
+            <input id="new-evt-location" type="text" name="location" maxlength="160" placeholder="e.g. Glasshouse Pavilion, Chicago, IL" class="form-input" />
           </div>
           <div class="form-group">
             <label for="new-evt-theme">Vibe / Aesthetic Theme</label>
-            <input id="new-evt-theme" type="text" name="theme" placeholder="e.g. Modern Romantic Candlelit Greenhouse" class="form-input" />
+            <input id="new-evt-theme" type="text" name="theme" maxlength="120" placeholder="e.g. Modern Romantic Candlelit Greenhouse" class="form-input" />
           </div>
         </form>
       `,
@@ -667,16 +836,17 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
         const form = document.getElementById("create-event-form");
         if (!form || !form.reportValidity()) return false;
         const formData = new FormData(form);
-        const type = formData.get("type");
-        const title = formData.get("title");
+        const type = String(formData.get("type") || "");
+        const title = String(formData.get("title") || "").trim();
         const date = formData.get("date");
         const time = formData.get("time");
         const budget = Number(formData.get("budget") || 10000);
         const guests = Number(formData.get("guests") || 50);
-        const location = formData.get("location") || "TBD";
-        const theme = formData.get("theme") || "Elegant & Modern";
+        const location = String(formData.get("location") || "").trim() || "TBD";
+        const theme = String(formData.get("theme") || "").trim() || "Elegant & Modern";
 
-        if (!title || !date || !Number.isFinite(budget) || budget <= 0 || !Number.isInteger(guests) || guests <= 0) {
+        if (!["wedding", "birthday", "community"].includes(type) || !title || !date ||
+          !Number.isFinite(budget) || budget <= 0 || !Number.isInteger(guests) || guests <= 0) {
           this.showToast("Enter a title, date, positive budget, and valid guest count.", "warning");
           return false;
         }
@@ -708,22 +878,16 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
           ],
           budgetCategories: [],
           expenses: [
-            { id: `exp-new-1`, category: "Venue & Rentals", name: "Primary Venue Booking Deposit", estimated: Math.round(budget * 0.35), actual: Math.round(budget * 0.35), paid: Math.round(budget * 0.15), status: "Deposit Paid", due: date, vendor: "Venue Partner" },
-            { id: `exp-new-2`, category: "Catering & Bar", name: "Guest Dinner & Bar Catering", estimated: Math.round(budget * 0.30), actual: Math.round(budget * 0.30), paid: 0, status: "Pending", due: date, vendor: "Catering Partner" }
+            { id: "exp-new-1", category: "Venue & Rentals", name: "Venue budget estimate", estimated: Math.round(budget * 0.35), actual: 0, paid: 0, status: "Pending", due: date },
+            { id: "exp-new-2", category: "Catering & Bar", name: "Catering budget estimate", estimated: Math.round(budget * 0.30), actual: 0, paid: 0, status: "Pending", due: date }
           ],
-          milestones: [
-            { id: `ms-new-1`, phase: "6-8 Months Out", title: "Lock in Venue and Principal Date", dueDate: date, owner: "Lead Organizer", status: "done", category: "Venue" },
-            { id: `ms-new-2`, phase: "2-3 Months Out", title: "Send Invitations & Confirm Menus", dueDate: date, owner: "Lead Organizer", status: "in-progress", category: "Invitations" },
-            { id: `ms-new-3`, phase: "Event Day", title: "Execute Day-of Run-of-Show and Welcomes", dueDate: date, owner: "Host", status: "todo", category: "Operations" }
-          ],
+          milestones: AuraPlanCore.createStarterMilestones(type, date),
           runOfShow: [
             { time: "04:00 PM", title: "Vendor Setup & Lighting Check", lead: "Lead Coordinator", location: "Main Hall", status: "pending", notes: "Check microphones and catering tables" },
             { time: "06:00 PM", title: "Guest Arrival & Welcome Cocktails", lead: "Hostesses", location: "Foyer", status: "pending", notes: "Background acoustic playlist" },
             { time: "07:30 PM", title: "Dinner & Welcome Remarks", lead: "Master of Ceremonies", location: "Main Dining", status: "pending", notes: "Champagne toast" }
           ],
-          vendors: [
-            { id: `v-new-1`, name: "Premier Event Hall", category: "Venue", contactName: "Reservation Desk", phone: "+1 (555) 234-5678", email: "info@premierhall.com", quote: Math.round(budget * 0.35), depositPaid: Math.round(budget * 0.15), status: "Deposit Paid", rating: 5, notes: "Includes sound system and tables" }
-          ],
+          vendors: [],
           personalizedIdeas: [
             {
               title: "Curated Welcome Cocktails",
@@ -736,7 +900,7 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
           aiPrompts: [
             `Suggest 3 high-impact theme concepts for my ${type}`,
             `Draft a minute-by-minute timeline for ${guests} guests`,
-            `What are the standard budget percentages for a $${budget.toLocaleString()} ${type}?`
+            `Create an illustrative category allocation for my ${type} and $${budget.toLocaleString()} target budget.`
           ]
         };
 
@@ -901,10 +1065,13 @@ Ask me anything about vendor contracts, high-impact decor, run-of-show schedules
     const toast = document.createElement("div");
     toast.className = `toast-item toast-${type}`;
     const icon = type === "success" ? "✓" : type === "warning" ? "⚠️" : type === "danger" ? "✕" : "ℹ";
-    toast.innerHTML = `
-      <span class="toast-icon">${icon}</span>
-      <span class="toast-msg">${message}</span>
-    `;
+    const iconElement = document.createElement("span");
+    iconElement.className = "toast-icon";
+    iconElement.textContent = icon;
+    const messageElement = document.createElement("span");
+    messageElement.className = "toast-msg";
+    messageElement.textContent = message;
+    toast.append(iconElement, messageElement);
 
     container.appendChild(toast);
     setTimeout(() => {
