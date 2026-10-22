@@ -9,7 +9,6 @@ class TimelineManager {
     this.app = app;
     this.viewMode = "milestones"; // 'milestones' | 'runofshow'
     this.layoutMode = "stream"; // 'stream' | 'kanban'
-    this.phaseFilter = "all";
   }
 
   getCurrentEvent() {
@@ -21,8 +20,8 @@ class TimelineManager {
     if (!container) return;
 
     const evt = this.getCurrentEvent();
-    const milestones = evt.milestones || [];
-    const runOfShow = evt.runOfShow || [];
+    const milestones = Array.isArray(evt.milestones) ? evt.milestones : [];
+    const runOfShow = Array.isArray(evt.runOfShow) ? evt.runOfShow : [];
 
     const totalMilestones = milestones.length;
     const completedMilestones = milestones.filter(m => m.status === "done").length;
@@ -101,21 +100,21 @@ class TimelineManager {
     }
 
     // Group milestones by phase
-    const phases = {};
+    const phases = new Map();
     milestones.forEach(m => {
       const p = m.phase || "Upcoming";
-      if (!phases[p]) phases[p] = [];
-      phases[p].push(m);
+      if (!phases.has(p)) phases.set(p, []);
+      phases.get(p).push(m);
     });
 
     return `
       <div class="milestones-stream-container">
-        ${Object.entries(phases).map(([phaseName, items]) => `
+        ${Array.from(phases).map(([phaseName, items]) => `
           <div class="phase-section">
             <div class="phase-header">
               <div class="phase-badge">
                 <span class="phase-pulse"></span>
-                <span>${phaseName}</span>
+                  <span>${AuraPlanCore.escapeHTML(phaseName)}</span>
               </div>
             </div>
             <div class="phase-milestones-list">
@@ -132,25 +131,25 @@ class TimelineManager {
     const isInProgress = m.status === "in-progress";
 
     return `
-      <div class="milestone-card glass-card ${isDone ? 'completed-card' : ''}" data-milestone-id="${m.id}">
+      <div class="milestone-card glass-card ${isDone ? 'completed-card' : ''}" data-milestone-id="${AuraPlanCore.escapeHTML(m.id)}">
         <div class="milestone-checkbox-wrap">
-          <input type="checkbox" class="custom-checkbox" data-action="toggle-milestone" data-id="${m.id}" aria-label="Mark ${AuraPlanCore.escapeHTML(m.title)} complete" ${isDone ? 'checked' : ''} />
+          <input type="checkbox" class="custom-checkbox" data-action="toggle-milestone" data-id="${AuraPlanCore.escapeHTML(m.id)}" aria-label="Mark ${AuraPlanCore.escapeHTML(m.title)} complete" ${isDone ? 'checked' : ''} />
         </div>
         <div class="milestone-content">
           <div class="milestone-headline">
-            <h4 class="milestone-title ${isDone ? 'line-through text-secondary' : ''}">${m.title}</h4>
+            <h4 class="milestone-title ${isDone ? 'line-through text-secondary' : ''}">${AuraPlanCore.escapeHTML(m.title)}</h4>
             <span class="badge ${isDone ? 'badge-success' : isInProgress ? 'badge-info' : 'badge-neutral'}">
               ${isDone ? 'Completed' : isInProgress ? 'In Progress' : 'Pending'}
             </span>
           </div>
           <div class="milestone-meta">
-            ${m.dueDate ? `<span class="meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${m.dueDate}</span>` : ''}
-            ${m.owner ? `<span class="meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${m.owner}</span>` : ''}
-            ${m.category ? `<span class="category-tag-sm">${m.category}</span>` : ''}
+            ${m.dueDate ? `<span class="meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${AuraPlanCore.escapeHTML(m.dueDate)}</span>` : ''}
+            ${m.owner ? `<span class="meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${AuraPlanCore.escapeHTML(m.owner)}</span>` : ''}
+            ${m.category ? `<span class="category-tag-sm">${AuraPlanCore.escapeHTML(m.category)}</span>` : ''}
           </div>
         </div>
         <div class="milestone-actions">
-          <button class="btn-icon text-danger" data-action="delete-milestone" data-id="${m.id}" title="Delete Milestone">
+          <button class="btn-icon text-danger" data-action="delete-milestone" data-id="${AuraPlanCore.escapeHTML(m.id)}" title="Delete Milestone">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
         </div>
@@ -180,18 +179,18 @@ class TimelineManager {
               </div>
               <div class="kanban-cards-container">
                 ${items.map(m => `
-                  <div class="kanban-card glass-card" data-milestone-id="${m.id}">
-                    <div class="kanban-card-title">${m.title}</div>
+                  <div class="kanban-card glass-card" data-milestone-id="${AuraPlanCore.escapeHTML(m.id)}">
+                  <div class="kanban-card-title">${AuraPlanCore.escapeHTML(m.title)}</div>
                     <div class="kanban-card-meta">
-                      <span class="category-tag-sm">${m.phase || m.category}</span>
-                      <span class="text-xs text-secondary">${m.dueDate || ''}</span>
+                    <span class="category-tag-sm">${AuraPlanCore.escapeHTML(m.phase || m.category || "")}</span>
+                    <span class="text-xs text-secondary">${AuraPlanCore.escapeHTML(m.dueDate || '')}</span>
                     </div>
                     <div class="kanban-card-footer">
-                      <span class="text-xs text-secondary">${m.owner || 'Unassigned'}</span>
+                    <span class="text-xs text-secondary">${AuraPlanCore.escapeHTML(m.owner || 'Unassigned')}</span>
                       <div class="kanban-cycle-buttons">
-                        ${col.status !== 'todo' ? `<button class="btn-xs-icon" data-action="move-milestone" data-id="${m.id}" data-target="todo" title="Move to To Do">◀</button>` : ''}
-                        ${col.status !== 'in-progress' ? `<button class="btn-xs-icon" data-action="move-milestone" data-id="${m.id}" data-target="in-progress" title="Move to In Progress">●</button>` : ''}
-                        ${col.status !== 'done' ? `<button class="btn-xs-icon" data-action="move-milestone" data-id="${m.id}" data-target="done" title="Move to Done">▶</button>` : ''}
+                      ${col.status !== 'todo' ? `<button class="btn-xs-icon" data-action="move-milestone" data-id="${AuraPlanCore.escapeHTML(m.id)}" data-target="todo" title="Move to To Do">◀</button>` : ''}
+                      ${col.status !== 'in-progress' ? `<button class="btn-xs-icon" data-action="move-milestone" data-id="${AuraPlanCore.escapeHTML(m.id)}" data-target="in-progress" title="Move to In Progress">●</button>` : ''}
+                      ${col.status !== 'done' ? `<button class="btn-xs-icon" data-action="move-milestone" data-id="${AuraPlanCore.escapeHTML(m.id)}" data-target="done" title="Move to Done">▶</button>` : ''}
                       </div>
                     </div>
                   </div>
@@ -232,24 +231,24 @@ class TimelineManager {
             return `
               <div class="ros-card glass-card ${isCompleted ? 'ros-completed' : ''}" data-ros-index="${idx}">
                 <div class="ros-time-col">
-                  <div class="ros-time-pill">${cue.time}</div>
+                  <div class="ros-time-pill">${AuraPlanCore.escapeHTML(cue.time)}</div>
                   <div class="ros-connector-line"></div>
                 </div>
                 <div class="ros-body">
                   <div class="ros-main-header">
-                    <h4 class="ros-title">${cue.title}</h4>
-                    <button class="btn-ros-toggle ${isCompleted ? 'active' : ''}" data-action="toggle-ros" data-index="${idx}">
+                    <h4 class="ros-title">${AuraPlanCore.escapeHTML(cue.title)}</h4>
+                    <button class="btn-ros-toggle ${isCompleted ? 'active' : ''}" data-action="toggle-ros" data-index="${idx}" aria-label="${isCompleted ? "Mark as not complete" : "Mark complete"}: ${AuraPlanCore.escapeHTML(cue.title)}">
                       ${isCompleted ? '✓ Completed' : 'Mark Done'}
                     </button>
                   </div>
                   <div class="ros-tags-row">
-                    ${cue.lead ? `<span class="ros-tag lead-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Lead: ${cue.lead}</span>` : ''}
-                    ${cue.location ? `<span class="ros-tag loc-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ${cue.location}</span>` : ''}
+                    ${cue.lead ? `<span class="ros-tag lead-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Lead: ${AuraPlanCore.escapeHTML(cue.lead)}</span>` : ''}
+                    ${cue.location ? `<span class="ros-tag loc-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ${AuraPlanCore.escapeHTML(cue.location)}</span>` : ''}
                   </div>
-                  ${cue.notes ? `<p class="ros-notes"><strong>Note:</strong> ${cue.notes}</p>` : ''}
+                  ${cue.notes ? `<p class="ros-notes"><strong>Note:</strong> ${AuraPlanCore.escapeHTML(cue.notes)}</p>` : ''}
                 </div>
                 <div class="ros-card-actions">
-                  <button class="btn-icon text-danger" data-action="delete-ros" data-index="${idx}" title="Delete Cue">
+                  <button class="btn-icon text-danger" data-action="delete-ros" data-index="${idx}" title="Delete Cue: ${AuraPlanCore.escapeHTML(cue.title)}">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                   </button>
                 </div>
@@ -362,7 +361,7 @@ class TimelineManager {
 
   toggleMilestoneStatus(id) {
     const evt = this.getCurrentEvent();
-    const item = evt.milestones.find(m => m.id === id);
+    const item = (evt.milestones || []).find(m => m.id === id);
     if (!item) return;
 
     item.status = item.status === "done" ? "todo" : "done";
@@ -373,7 +372,8 @@ class TimelineManager {
 
   moveMilestone(id, newStatus) {
     const evt = this.getCurrentEvent();
-    const item = evt.milestones.find(m => m.id === id);
+    if (!["todo", "in-progress", "done"].includes(newStatus)) return;
+    const item = (evt.milestones || []).find(m => m.id === id);
     if (!item) return;
 
     item.status = newStatus;
@@ -383,6 +383,7 @@ class TimelineManager {
 
   deleteMilestone(id) {
     const evt = this.getCurrentEvent();
+    if (!Array.isArray(evt.milestones)) return;
     const idx = evt.milestones.findIndex(m => m.id === id);
     if (idx === -1) return;
 
@@ -394,7 +395,7 @@ class TimelineManager {
 
   toggleRosStatus(idx) {
     const evt = this.getCurrentEvent();
-    const cue = evt.runOfShow[idx];
+    const cue = evt.runOfShow?.[idx];
     if (!cue) return;
 
     cue.status = cue.status === "completed" ? "pending" : "completed";
@@ -404,6 +405,7 @@ class TimelineManager {
 
   deleteRosItem(idx) {
     const evt = this.getCurrentEvent();
+    if (!Array.isArray(evt.runOfShow) || !evt.runOfShow[idx]) return;
     const [deleted] = evt.runOfShow.splice(idx, 1);
     this.app.saveCurrentEvent();
     this.render();
@@ -412,6 +414,7 @@ class TimelineManager {
 
   addMilestoneItem(item) {
     const evt = this.getCurrentEvent();
+    if (!Array.isArray(evt.milestones)) evt.milestones = [];
     evt.milestones.push({
       id: `ms-${Date.now()}`,
       phase: item.phase || "Upcoming",
@@ -427,6 +430,7 @@ class TimelineManager {
 
   addRunOfShowItem(item) {
     const evt = this.getCurrentEvent();
+    if (!Array.isArray(evt.runOfShow)) evt.runOfShow = [];
     evt.runOfShow.push({
       time: item.time || "12:00 PM",
       title: item.title,
@@ -435,7 +439,6 @@ class TimelineManager {
       notes: item.notes || "",
       status: "pending"
     });
-    // Sort chronologically if possible
     this.app.saveCurrentEvent();
     this.render();
   }
@@ -447,7 +450,7 @@ class TimelineManager {
         <form id="add-milestone-form" class="modal-form">
           <div class="form-group">
             <label>Milestone Title *</label>
-            <input type="text" name="title" required placeholder="e.g. Confirm Floral Arch Installation Details" class="form-input" />
+            <input type="text" name="title" required maxlength="120" placeholder="e.g. Confirm Floral Arch Installation Details" class="form-input" />
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -470,11 +473,11 @@ class TimelineManager {
           <div class="form-row">
             <div class="form-group">
               <label>Person In Charge / Owner</label>
-              <input type="text" name="owner" placeholder="e.g. Lead Planner / Elena" class="form-input" />
+              <input type="text" name="owner" maxlength="100" placeholder="e.g. Lead Planner / Elena" class="form-input" />
             </div>
             <div class="form-group">
               <label>Category</label>
-              <input type="text" name="category" placeholder="e.g. Decor, Catering, Logistics" class="form-input" />
+              <input type="text" name="category" maxlength="80" placeholder="e.g. Decor, Catering, Logistics" class="form-input" />
             </div>
           </div>
         </form>
@@ -482,18 +485,13 @@ class TimelineManager {
       confirmText: "Save Milestone",
       onConfirm: () => {
         const form = document.getElementById("add-milestone-form");
-        if (!form) return;
+        if (!form || !form.reportValidity()) return false;
         const formData = new FormData(form);
-        const title = formData.get("title");
+        const title = String(formData.get("title") || "").trim();
         const phase = formData.get("phase");
         const dueDate = formData.get("dueDate");
         const owner = formData.get("owner");
         const category = formData.get("category");
-
-        if (!title) {
-          this.app.showToast("Please provide milestone title", "warning");
-          return false;
-        }
 
         this.addMilestoneItem({ title, phase, dueDate, owner, category, status: "todo" });
         this.app.showToast(`Milestone "${title}" added`, "success");
@@ -510,44 +508,39 @@ class TimelineManager {
           <div class="form-row">
             <div class="form-group">
               <label>Exact Time *</label>
-              <input type="text" name="time" required placeholder="e.g. 04:15 PM" class="form-input" />
+              <input type="text" name="time" required maxlength="20" placeholder="e.g. 04:15 PM" class="form-input" />
             </div>
             <div class="form-group">
               <label>Event / Cue Title *</label>
-              <input type="text" name="title" required placeholder="e.g. Cocktail Hour & Passed Hors d'oeuvres" class="form-input" />
+              <input type="text" name="title" required maxlength="120" placeholder="e.g. Cocktail Hour & Passed Hors d'oeuvres" class="form-input" />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Lead POC / Contact</label>
-              <input type="text" name="lead" placeholder="e.g. Head Caterer & Lead Host" class="form-input" />
+              <input type="text" name="lead" maxlength="100" placeholder="e.g. Head Caterer & Lead Host" class="form-input" />
             </div>
             <div class="form-group">
               <label>Location / Zone</label>
-              <input type="text" name="location" placeholder="e.g. South Terrace Garden" class="form-input" />
+              <input type="text" name="location" maxlength="120" placeholder="e.g. South Terrace Garden" class="form-input" />
             </div>
           </div>
           <div class="form-group">
             <label>Notes & Instructions</label>
-            <textarea name="notes" rows="2" placeholder="e.g. Cue live jazz band; acoustic mic check at 04:10 PM" class="form-input"></textarea>
+            <textarea name="notes" rows="2" maxlength="500" placeholder="e.g. Cue live jazz band; acoustic mic check at 04:10 PM" class="form-input"></textarea>
           </div>
         </form>
       `,
       confirmText: "Save Cue",
       onConfirm: () => {
         const form = document.getElementById("add-ros-form");
-        if (!form) return;
+        if (!form || !form.reportValidity()) return false;
         const formData = new FormData(form);
-        const time = formData.get("time");
-        const title = formData.get("title");
+        const time = String(formData.get("time") || "").trim();
+        const title = String(formData.get("title") || "").trim();
         const lead = formData.get("lead");
         const location = formData.get("location");
         const notes = formData.get("notes");
-
-        if (!time || !title) {
-          this.app.showToast("Please provide cue time and title", "warning");
-          return false;
-        }
 
         this.addRunOfShowItem({ time, title, lead, location, notes });
         this.app.showToast(`Cue "${title}" added to Run of Show`, "success");

@@ -2,7 +2,19 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { readFileSync } = require("node:fs");
 const { runInNewContext } = require("node:vm");
-const { buildEventPlan, calculateBudget, createInvitation, escapeHTML, summarizeGuests, validateGuest } = require("../js/planning-core.js");
+const {
+  buildEventPlan,
+  buildPersonalizedIdeas,
+  calculateBudget,
+  createInvitation,
+  createStarterMilestones,
+  escapeHTML,
+  getVendorChecklist,
+  summarizeDashboard,
+  summarizeGuests,
+  validateExpense,
+  validateGuest
+} = require("../js/planning-core.js");
 
 test("builds a plan from saved event data without inventing schedule or ideas", () => {
   const event = {
@@ -58,14 +70,14 @@ test("calculates estimated, actual, paid, and category totals from event expense
   assert.deepEqual(result, {
     target: 1000,
     totalEstimated: 725,
-    totalActual: 810,
+    totalActual: 560,
     totalPaid: 360,
-    balanceDue: 450,
-    remainingCushion: 190,
-    spentPercent: 81,
+    balanceDue: 200,
+    remainingCushion: 440,
+    spentPercent: 56,
     byCategory: {
       Venue: { actual: 485, estimated: 425, count: 2 },
-      Food: { actual: 250, estimated: 250, count: 1 },
+      Food: { actual: 0, estimated: 250, count: 1 },
       General: { actual: 75, estimated: 50, count: 1 }
     }
   });
@@ -93,6 +105,117 @@ test("caps budget progress at 100 percent while preserving the overrun", () => {
   assert.equal(result.spentPercent, 100);
   assert.equal(result.remainingCushion, -25);
   assert.equal(result.balanceDue, 75);
+});
+
+test("uses estimates only when actual costs are missing and ignores invalid stored amounts", () => {
+  const result = calculateBudget({
+    targetBudget: "1000",
+    expenses: [
+      { estimated: 100, paid: 20 },
+      { estimated: 75, actual: 0, paid: 0 },
+      { estimated: -50, actual: "invalid", paid: -1 }
+    ]
+  });
+
+  assert.equal(result.totalEstimated, 175);
+  assert.equal(result.totalActual, 100);
+  assert.equal(result.totalPaid, 20);
+  assert.equal(result.remainingCushion, 900);
+});
+
+test("validates expense details and payment amounts", () => {
+  assert.equal(validateExpense({
+    name: "Venue deposit",
+    category: "Venue",
+    estimated: "250",
+    actual: "",
+    paid: "100",
+    status: "Deposit Paid"
+  }).valid, true);
+
+  const invalid = validateExpense({
+    name: " ",
+    estimated: "-1",
+    actual: "10",
+    paid: "11",
+    status: "Unknown"
+  });
+  assert.equal(invalid.valid, false);
+  assert.deepEqual(invalid.errors, [
+    "Expense name is required.",
+    "Expense category is required.",
+    "Estimated amount must be a non-negative number.",
+    "Paid amount cannot exceed the actual amount.",
+    "Select a valid payment status."
+  ]);
+
+  assert.equal(validateExpense({
+    name: "Missing estimate",
+    category: "Venue",
+    estimated: "",
+    due: "2027-02-31"
+  }).valid, false);
+  assert.deepEqual(validateExpense({
+    name: "Invalid due date",
+    category: "Venue",
+    estimated: 25,
+    due: "2027-02-31"
+  }).errors, ["Enter a valid payment due date."]);
+});
+
+test("builds category-based starter vendor tasks for each supported event type", () => {
+  const communityTasks = createStarterMilestones("community", "2027-06-12", "2027-05-01");
+
+  assert.deepEqual(getVendorChecklist("wedding"), [
+    "Venue", "Catering", "Photography", "Decor", "Entertainment", "Other"
+  ]);
+  assert.equal(communityTasks.some(task => task.category === "Permits & Safety"), true);
+  assert.equal(communityTasks.every(task => task.dueDate > "2027-05-01" && task.dueDate < "2027-06-12" && task.status === "todo"), true);
+  assert.equal(new Set(communityTasks.map(task => task.dueDate)).size, communityTasks.length);
+  assert.equal(createStarterMilestones("birthday", "2027-06-12").some(task => task.category === "Cake & Desserts"), true);
+});
+
+test("summarizes budget, task progress, overdue work, and vendor checklist coverage", () => {
+  const summary = summarizeDashboard({
+    type: "wedding",
+    targetBudget: 1000,
+    expenses: [{ category: "Venue", estimated: 200, actual: 150 }],
+    milestones: [
+      { id: "late", title: "Overdue task", dueDate: "2027-05-01", status: "todo" },
+      { id: "next", title: "Next task", dueDate: "2027-05-05", status: "in-progress" },
+      { id: "done", title: "Finished task", dueDate: "2027-05-04", status: "done" }
+    ],
+    vendors: [
+      { category: "Venue", status: "Confirmed" },
+      { category: "Catering", status: "Researching" }
+    ]
+  }, "2027-05-03");
+
+  assert.equal(summary.budget.remainingCushion, 850);
+  assert.equal(summary.tasks.percentComplete, 33);
+  assert.equal(summary.tasks.overdue, 1);
+  assert.deepEqual(summary.tasks.upcoming.map(task => task.title), ["Next task"]);
+  assert.equal(summary.vendorChecklist.covered, 2);
+  assert.equal(summary.vendorChecklist.confirmed, 1);
+});
+
+test("personalizes deterministic idea prompts with event type, budget, guest count, theme, and priorities", () => {
+  const ideas = buildPersonalizedIdeas({
+    type: "community",
+    targetBudget: 20000,
+    currency: "USD",
+    guestCount: 500,
+    theme: "Harvest lights",
+    planningPreferences: "Low-waste and wheelchair accessible"
+  });
+
+  assert.deepEqual(ideas.map(idea => idea.category), [
+    "Theme", "Decor", "Food", "Activities", "Guest Experience"
+  ]);
+  assert.equal(ideas[0].description.includes("Harvest lights"), true);
+  assert.equal(ideas[0].description.includes("Low-waste and wheelchair accessible"), true);
+  assert.equal(ideas[0].description.includes("large guest group"), true);
+  assert.equal(ideas[0].description.includes("USD 40 per guest"), true);
 });
 
 test("builds a safe empty plan when optional event sections are absent", () => {

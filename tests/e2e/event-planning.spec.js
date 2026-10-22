@@ -53,9 +53,59 @@ test("event creation validates input and saves a complete event plan", async ({ 
     milestones: expect.any(Array),
     runOfShow: expect.any(Array)
   });
+  const createdEvent = await page.evaluate(() => {
+    const events = JSON.parse(localStorage.getItem("auraplan_events"));
+    return events.find(event => event.id === localStorage.getItem("auraplan_active_event"));
+  });
+  expect(createdEvent.milestones.map(task => task.category)).toEqual(expect.arrayContaining([
+    "Venue", "Catering", "Photography", "Decor", "Entertainment", "Permits & Safety", "Sanitation"
+  ]));
   await page.reload();
   await expect(page.locator("#event-switcher-select")).toContainText("Jordan's Garden Celebration");
   await expect(page.locator("#event-switcher-select")).toHaveValue(/evt-community-/);
+});
+
+test("dashboard summarizes event progress and personalized ideas can be saved", async ({ page }) => {
+  await page.goto("/");
+  await openTab(page, "dashboard");
+  await expect(page.locator(".overview-dashboard")).toBeVisible();
+  await expect(page.locator(".overview-metrics .metric-card")).toHaveCount(4);
+  await expect(page.locator(".overview-vendor-list li").first()).toBeVisible();
+
+  await openTab(page, "ideas");
+  await expect(page.locator(".personalized-idea-card")).toHaveCount(5);
+  await expect(page.locator(".personalized-ideas-section")).toContainText("not AI-generated");
+  const savedIdeaCount = await page.locator(".ideas-grid .idea-card").count();
+  await page.locator(".personalized-idea-card button").first().click();
+  await expect(page.locator(".ideas-grid .idea-card")).toHaveCount(savedIdeaCount + 1);
+  await page.reload();
+  await openTab(page, "ideas");
+  await expect(page.locator(".ideas-grid .idea-card")).toContainText("Golden-hour garden ceremony");
+});
+
+test("budget entry rejects invalid payments and preserves a zero actual cost", async ({ page }) => {
+  await page.goto("/");
+  await openTab(page, "budget");
+  await page.locator("#btn-add-expense").click();
+
+  await page.locator("#add-expense-form [name=name]").fill("Volunteer venue credit");
+  await page.locator("#add-expense-form [name=estimated]").fill("100");
+  await page.locator("#add-expense-form [name=actual]").fill("0");
+  await page.locator("#add-expense-form [name=paid]").fill("1");
+  await page.getByRole("button", { name: "Save Expense" }).click();
+  await expect(page.locator("#global-modal-overlay")).toHaveClass(/open/);
+  await expect(page.locator("#toast-container")).toContainText("Paid amount cannot exceed the actual amount.");
+
+  await page.locator("#add-expense-form [name=paid]").fill("0");
+  await page.getByRole("button", { name: "Save Expense" }).click();
+  await expect(page.locator("#global-modal-overlay")).not.toHaveClass(/open/);
+  await expect(page.locator(".data-table tbody")).toContainText("Volunteer venue credit");
+  const expense = await page.evaluate(() => {
+    const events = JSON.parse(localStorage.getItem("auraplan_events"));
+    const active = events.find(event => event.id === localStorage.getItem("auraplan_active_event"));
+    return active.expenses.find(item => item.name === "Volunteer venue credit");
+  });
+  expect(expense).toMatchObject({ estimated: 100, actual: 0, paid: 0 });
 });
 
 test("event dialog has accessible labels, traps keyboard focus, and restores focus", async ({ page }) => {
@@ -167,6 +217,8 @@ test("planning tabs support roving keyboard navigation and valid tab semantics",
   const firstTab = page.locator("#tab-button-ai");
   await firstTab.focus();
   await firstTab.dispatchEvent("keydown", { key: "ArrowRight", bubbles: true });
+  await expect(page.locator("#tab-button-dashboard")).toHaveAttribute("aria-selected", "true");
+  await page.locator("#tab-button-dashboard").dispatchEvent("keydown", { key: "ArrowRight", bubbles: true });
   await expect(page.locator("#tab-button-budget")).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("#tab-budget")).toHaveAttribute("aria-hidden", "false");
 
@@ -184,7 +236,7 @@ test("all application tabs in both themes have no WCAG 2.1 A/AA axe violations",
     if (isLight !== (theme === "light")) {
       await page.locator("#btn-toggle-theme").evaluate(button => button.click());
     }
-    for (const id of ["ai", "budget", "timeline", "vendors", "ideas", "itinerary", "planner", "guests", "invitation"]) {
+    for (const id of ["dashboard", "ai", "budget", "timeline", "vendors", "ideas", "itinerary", "planner", "guests", "invitation"]) {
       await openTab(page, id);
       await page.locator(`#tab-${id}`).evaluate(pane => Promise.all(
         pane.getAnimations().filter(animation => animation.playState === "running").map(animation => animation.finished)
@@ -209,7 +261,7 @@ test("all application tabs fit common mobile, tablet, and desktop widths", async
   await page.goto("/");
   for (const width of [320, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 });
-    for (const id of ["ai", "budget", "timeline", "vendors", "ideas", "itinerary", "planner", "guests", "invitation"]) {
+    for (const id of ["dashboard", "ai", "budget", "timeline", "vendors", "ideas", "itinerary", "planner", "guests", "invitation"]) {
       await openTab(page, id);
       const dimensions = await page.evaluate(() => ({
         clientWidth: document.documentElement.clientWidth,

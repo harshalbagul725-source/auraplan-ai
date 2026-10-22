@@ -54,6 +54,7 @@ Organizing large-scale events—whether a 140-guest luxury wedding, a milestone 
 
 6. **🎨 Moodboard Studio & Speech Workshop**:
    - High-definition editorial moodboard photography.
+   - Event-type-specific starter vendor tasks, a consolidated progress dashboard, and deterministic idea prompts adapted to the guest count, budget, theme, and saved priorities.
    - 5-swatch color harmony cards with 1-click HEX copy.
    - Local example speech, toast, and invitation drafts; no live AI service is connected.
 

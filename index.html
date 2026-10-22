@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AuraPlan AI — The Next-Gen Intelligent Event Planning Studio</title>
-  <meta name="description" content="AI-powered planning studio for luxury weddings, milestone birthdays, and community festivals with dynamic budgets, timelines, vendor directories, and personalized concepts." />
+  <meta name="description" content="Event-planning studio for weddings, milestone birthdays, and community festivals with budgets, timelines, vendor checklists, and local planning prompts." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&amp;family=Plus+Jakarta+Sans:wght@300;400;500;600;700&amp;display=swap" />
@@ -85,6 +85,10 @@
       <button id="tab-button-ai" class="nav-tab-item ai-tab-glow active" data-tab="ai" role="tab" aria-selected="true" aria-controls="tab-ai" tabindex="0">
         <span class="ai-sparkle">✨</span> AuraPlan AI Co-Pilot
       </button>
+      <button id="tab-button-dashboard" class="nav-tab-item" data-tab="dashboard" role="tab" aria-selected="false" aria-controls="tab-dashboard" tabindex="-1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="5" rx="1"/><rect x="13" y="10" width="8" height="11" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/></svg>
+        Dashboard
+      </button>
       <button id="tab-button-budget" class="nav-tab-item" data-tab="budget" role="tab" aria-selected="false" aria-controls="tab-budget" tabindex="-1">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
         Budget & Financial Engine
@@ -121,6 +125,10 @@
 
     <!-- Main Content Panes -->
     <main class="app-main-content">
+      <section class="tab-pane" id="tab-dashboard" role="tabpanel" aria-labelledby="tab-button-dashboard" tabindex="0">
+        <div id="dashboard-tab-content"></div>
+      </section>
+
       <!-- 1. AI Co-Pilot Tab -->
       <section class="tab-pane active" id="tab-ai" role="tabpanel" aria-labelledby="tab-button-ai" tabindex="0">
         <div id="ai-tab-content"></div>

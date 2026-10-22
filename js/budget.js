@@ -26,7 +26,9 @@ class BudgetManager {
     };
     const evt = this.getCurrentEvent();
     const sym = symbolMap[evt.currency] || "$";
-    return `${sym}${Number(amount || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    const numericAmount = Number(amount);
+    const safeAmount = Number.isFinite(numericAmount) ? numericAmount : 0;
+    return `${sym}${safeAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   }
 
   getCalculations() {
@@ -129,12 +131,12 @@ class BudgetManager {
               <h4>${calc.remainingCushion >= 0 ? 'Optimal Allocation Status' : 'Over-Budget Alert Detected'}</h4>
               <p class="ai-budget-text">
                 ${calc.remainingCushion >= 0
-                  ? `Your budget has a healthy <strong>${this.formatCurrency(calc.remainingCushion)}</strong> safety cushion (${Math.round((calc.remainingCushion / calc.target) * 100)}%). Your top expense is <em>${this.getTopCategory(calc.byCategory)}</em>.`
+                  ? `Your budget has a healthy <strong>${this.formatCurrency(calc.remainingCushion)}</strong> safety cushion (${calc.target > 0 ? Math.round((calc.remainingCushion / calc.target) * 100) : 0}%). Your top expense is <em>${AuraPlanCore.escapeHTML(this.getTopCategory(calc.byCategory))}</em>.`
                   : `You are currently exceeding your target budget by <strong>${this.formatCurrency(Math.abs(calc.remainingCushion))}</strong>. Consider shifting floral decor to seasonal locally-sourced greenery or trimming print stationery.`
                 }
               </p>
               <div class="ai-action-chips">
-                <button class="chip-btn" data-ai-query="Suggest 3 cost-saving strategies for my ${evt.type} budget">
+                <button class="chip-btn" data-ai-query="Suggest 3 cost-saving strategies for my ${AuraPlanCore.escapeHTML(evt.type)} budget">
                   💡 3 Instant Savings Strategies
                 </button>
                 <button class="chip-btn" data-ai-query="What is a good tipping protocol for wedding and event vendors?">
@@ -158,12 +160,12 @@ class BudgetManager {
             <div class="expenses-controls">
               <div class="search-box">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="text" id="expense-search" placeholder="Search item, vendor..." value="${this.searchQuery}" />
+                <input type="text" id="expense-search" placeholder="Search item, vendor..." value="${AuraPlanCore.escapeHTML(this.searchQuery)}" />
               </div>
               <select id="expense-filter-cat" class="select-dropdown" aria-label="Filter expenses by category">
                 <option value="all">All Categories</option>
                 ${Object.keys(calc.byCategory).map(cat => `
-                  <option value="${cat}" ${this.categoryFilter === cat ? 'selected' : ''}>${cat}</option>
+                  <option value="${AuraPlanCore.escapeHTML(cat)}" ${this.categoryFilter === cat ? 'selected' : ''}>${AuraPlanCore.escapeHTML(cat)}</option>
                 `).join('')}
               </select>
               <select id="expense-filter-status" class="select-dropdown" aria-label="Filter expenses by payment status">
@@ -254,7 +256,7 @@ class BudgetManager {
           stroke-dasharray="${strokeDash} ${circumference - strokeDash}"
           stroke-dashoffset="${strokeDashoffset}"
           class="donut-segment"
-          data-cat="${cat}"
+          data-cat="${AuraPlanCore.escapeHTML(cat)}"
           data-amount="${this.formatCurrency(data.actual)}"
           data-pct="${Math.round(pct * 100)}%"
         />
@@ -289,7 +291,7 @@ class BudgetManager {
         <div class="legend-row">
           <div class="legend-info">
             <span class="legend-dot" style="background-color: ${color}"></span>
-            <span class="legend-name">${cat}</span>
+            <span class="legend-name">${AuraPlanCore.escapeHTML(cat)}</span>
           </div>
           <div class="legend-numbers">
             <span class="legend-amount">${this.formatCurrency(data.actual)}</span>
@@ -302,12 +304,15 @@ class BudgetManager {
 
   renderExpenseRows(expenses) {
     let filtered = expenses.filter(exp => {
+      const name = String(exp.name || "");
+      const vendor = String(exp.vendor || "");
+      const category = String(exp.category || "General");
       const matchSearch = !this.searchQuery || 
-        exp.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        (exp.vendor && exp.vendor.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
-        exp.category.toLowerCase().includes(this.searchQuery.toLowerCase());
+        name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        vendor.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        category.toLowerCase().includes(this.searchQuery.toLowerCase());
 
-      const matchCat = this.categoryFilter === "all" || exp.category === this.categoryFilter;
+      const matchCat = this.categoryFilter === "all" || category === this.categoryFilter;
       const matchStatus = this.statusFilter === "all" || exp.status === this.statusFilter;
 
       return matchSearch && matchCat && matchStatus;
@@ -332,20 +337,20 @@ class BudgetManager {
         item.status === "Overdue" ? "badge-danger" : "badge-warning";
 
       return `
-        <tr data-expense-id="${item.id}">
-          <td><span class="category-tag">${item.category}</span></td>
-          <td class="font-medium">${item.name}</td>
-          <td class="text-secondary">${item.vendor || '—'}</td>
+        <tr data-expense-id="${AuraPlanCore.escapeHTML(item.id)}">
+          <td><span class="category-tag">${AuraPlanCore.escapeHTML(item.category || "General")}</span></td>
+          <td class="font-medium">${AuraPlanCore.escapeHTML(item.name || "Expense")}</td>
+          <td class="text-secondary">${AuraPlanCore.escapeHTML(item.vendor || '—')}</td>
           <td class="text-secondary">${this.formatCurrency(item.estimated)}</td>
-          <td class="font-semibold">${this.formatCurrency(item.actual || item.estimated)}</td>
+          <td class="font-semibold">${this.formatCurrency(item.actual ?? item.estimated)}</td>
           <td class="text-success">${this.formatCurrency(item.paid)}</td>
-          <td class="text-secondary">${item.due || 'TBD'}</td>
-          <td><span class="badge ${statusBadgeClass}">${item.status}</span></td>
+          <td class="text-secondary">${AuraPlanCore.escapeHTML(item.due || 'TBD')}</td>
+          <td><span class="badge ${statusBadgeClass}">${AuraPlanCore.escapeHTML(item.status || "Pending")}</span></td>
           <td class="text-right table-actions">
-            <button class="btn-icon" data-action="toggle-paid" data-id="${item.id}" title="Toggle Paid Status">
+            <button class="btn-icon" data-action="toggle-paid" data-id="${AuraPlanCore.escapeHTML(item.id)}" title="Toggle Paid Status">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
             </button>
-            <button class="btn-icon text-danger" data-action="delete-expense" data-id="${item.id}" title="Delete Expense">
+            <button class="btn-icon text-danger" data-action="delete-expense" data-id="${AuraPlanCore.escapeHTML(item.id)}" title="Delete Expense">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </button>
           </td>
@@ -435,7 +440,7 @@ class BudgetManager {
       item.paid = 0;
     } else {
       item.status = "Paid";
-      item.paid = item.actual || item.estimated;
+      item.paid = item.actual ?? item.estimated;
     }
 
     this.app.saveCurrentEvent();
@@ -456,19 +461,20 @@ class BudgetManager {
 
   addExpenseItem(item) {
     const evt = this.getCurrentEvent();
+    const validation = AuraPlanCore.validateExpense(item);
+    if (!validation.valid) {
+      this.app.showToast(validation.errors.join(" "), "warning");
+      return false;
+    }
+
+    const expense = validation.expense;
     evt.expenses.push({
       id: `exp-${Date.now()}`,
-      category: item.category || "General",
-      name: item.name || "Custom Item",
-      estimated: Number(item.estimated || 0),
-      actual: Number(item.actual || item.estimated || 0),
-      paid: Number(item.paid || 0),
-      status: item.status || "Pending",
-      due: item.due || "",
-      vendor: item.vendor || ""
+      ...expense
     });
     this.app.saveCurrentEvent();
     this.render();
+    return true;
   }
 
   openAddExpenseModal() {
@@ -492,8 +498,8 @@ class BudgetManager {
           <div class="form-row">
             <div class="form-group">
               <label>Category *</label>
-              <select name="category" class="form-input">
-                ${allCats.map(c => `<option value="${c}">${c}</option>`).join("")}
+              <select name="category" class="form-input" required>
+                ${allCats.map(c => `<option value="${AuraPlanCore.escapeHTML(c)}">${AuraPlanCore.escapeHTML(c)}</option>`).join("")}
               </select>
             </div>
             <div class="form-group">
@@ -503,18 +509,18 @@ class BudgetManager {
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Estimated Amount (${evt.currency}) *</label>
-              <input type="number" name="estimated" step="10" required placeholder="1200" class="form-input" />
+              <label>Estimated Amount (${AuraPlanCore.escapeHTML(evt.currency)}) *</label>
+              <input type="number" name="estimated" min="0" step="any" required placeholder="1200" class="form-input" />
             </div>
             <div class="form-group">
-              <label>Actual / Contracted (${evt.currency})</label>
-              <input type="number" name="actual" step="10" placeholder="Optional" class="form-input" />
+              <label>Actual / Contracted (${AuraPlanCore.escapeHTML(evt.currency)})</label>
+              <input type="number" name="actual" min="0" step="any" placeholder="Optional" class="form-input" />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Deposit Paid (${evt.currency})</label>
-              <input type="number" name="paid" step="10" value="0" class="form-input" />
+              <label>Deposit Paid (${AuraPlanCore.escapeHTML(evt.currency)})</label>
+              <input type="number" name="paid" min="0" step="any" value="0" class="form-input" />
             </div>
             <div class="form-group">
               <label>Payment Due Date</label>
@@ -534,25 +540,22 @@ class BudgetManager {
       confirmText: "Save Expense",
       onConfirm: () => {
         const form = document.getElementById("add-expense-form");
-        if (!form) return;
+        if (!form || !form.reportValidity()) return false;
         const formData = new FormData(form);
-        const name = formData.get("name");
+        const name = String(formData.get("name") || "").trim();
         const category = formData.get("category");
         const estimated = Number(formData.get("estimated") || 0);
-        const actual = Number(formData.get("actual") || estimated);
+        const actualValue = formData.get("actual");
+        const actual = actualValue === "" ? estimated : Number(actualValue);
         const paid = Number(formData.get("paid") || 0);
         const due = formData.get("due");
         const vendor = formData.get("vendor");
         const status = formData.get("status");
 
-        if (!name || isNaN(estimated)) {
-          this.app.showToast("Please provide item name and valid estimate", "warning");
-          return false;
-        }
-
-        this.addExpenseItem({
+        const added = this.addExpenseItem({
           name, category, estimated, actual, paid, due, vendor, status
         });
+        if (!added) return false;
         this.app.showToast(`Added "${name}" to budget`, "success");
         return true;
       }
@@ -569,8 +572,8 @@ class BudgetManager {
       return `
         <div class="allocator-row">
           <div class="allocator-cat">
-            <strong>${b.name}</strong>
-            <span class="text-secondary text-sm">Industry standard: ${b.pct}%</span>
+            <strong>${AuraPlanCore.escapeHTML(b.name)}</strong>
+            <span class="text-secondary text-sm">Illustrative allocation: ${b.pct}%</span>
           </div>
           <div class="allocator-calc">
             <span class="font-headline font-semibold">${this.formatCurrency(allocated)}</span>
@@ -580,12 +583,12 @@ class BudgetManager {
     }).join("");
 
     this.app.showModal({
-      title: "AI Budget Benchmark Auto-Allocator",
+      title: "Illustrative Budget Allocator",
       content: `
         <div class="allocator-modal-content">
           <p class="text-secondary text-sm">
-            Based on industry standard data for a high-end <strong>${evt.type}</strong> with <strong>${evt.guestCount} guests</strong>,
-            here is the mathematically optimized breakdown for your <strong>${this.formatCurrency(currentTarget)}</strong> budget:
+            A starting-point split for a <strong>${AuraPlanCore.escapeHTML(evt.type)}</strong> with <strong>${Number(evt.guestCount) || 0} guests</strong>.
+            These illustrative percentages are not verified market data. Adjust the target to fit your own quotes and priorities:
           </p>
           <div class="allocator-list">
             ${rows}
@@ -593,7 +596,7 @@ class BudgetManager {
           <div class="allocator-adjust-target">
             <label class="form-label">Adjust Overall Target Cap:</label>
             <div class="input-with-button">
-              <input type="number" id="allocator-target-input" value="${currentTarget}" class="form-input" step="500" />
+              <input type="number" id="allocator-target-input" min="0" value="${currentTarget}" class="form-input" step="any" />
             </div>
           </div>
         </div>
@@ -601,13 +604,16 @@ class BudgetManager {
       confirmText: "Apply Target Budget",
       onConfirm: () => {
         const input = document.getElementById("allocator-target-input");
-        if (input && !isNaN(Number(input.value))) {
-          evt.targetBudget = Number(input.value);
-          this.app.saveCurrentEvent();
-          this.render();
-          this.app.renderEventSummary();
-          this.app.showToast(`Target budget set to ${this.formatCurrency(evt.targetBudget)}`, "success");
+        if (!input || !input.reportValidity()) return false;
+        const target = Number(input.value);
+        if (!Number.isFinite(target) || target < 0) {
+          this.app.showToast("Enter a valid non-negative target budget.", "warning");
+          return false;
         }
+        evt.targetBudget = target;
+        this.app.saveCurrentEvent();
+        this.render();
+        this.app.showToast(`Target budget set to ${this.formatCurrency(evt.targetBudget)}`, "success");
         return true;
       }
     });
